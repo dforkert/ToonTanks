@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Destructible.h"
 #include "GameFramework/Pawn.h"
 #include "BasePawn.generated.h"
 
@@ -11,7 +12,7 @@ class USoundBase;
 class AProjectile;
 
 UCLASS()
-class TOONTANKS_API ABasePawn : public APawn
+class TOONTANKS_API ABasePawn : public APawn, public IDestructible
 {
 	GENERATED_BODY()
 
@@ -19,7 +20,7 @@ public:
 	// Sets default values for this pawn's properties
 	ABasePawn();
 
-	virtual void HandleDestruction();
+	virtual void DestroyPawn() override;
 
 protected:
 	void RotateTurret(FVector LookAtTarget, const float DeltaTime) const;

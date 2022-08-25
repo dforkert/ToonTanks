@@ -3,6 +3,8 @@
 
 #include "HealthComponent.h"
 
+#include "BasePawn.h"
+#include "Destructible.h"
 #include "ToonTanksGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -32,24 +34,40 @@ void UHealthComponent::BeginPlay()
 
 
 void UHealthComponent::TakeDamage(
-	AActor* ActorToBeDamaged,
+	AActor* /*ActorToBeDamaged*/,
 	const float DamageAmount,
-	const UDamageType* DamageType,
-	AController* Instigator,
-	AActor* DamageCauser
+	const UDamageType* /*DamageType*/,
+	AController* /*Instigator*/,
+	AActor* /*DamageCauser*/
 )
 {
 	if (DamageAmount <= 0.f)
 	{
 		return;
 	}
-
 	Health -= DamageAmount;
-	if (ToonTanksGameModeBase && Health <= 0.f)
+	if (Health <= 0.f)
+	{
+		KillOwner();
+	}
+}
+
+void UHealthComponent::KillOwner() const
+{
+	// ReSharper disable once CppTooWideScopeInitStatement
+	ABasePawn* OwningBasePawn{Cast<ABasePawn>(GetOwner())};
+	if(OwningBasePawn && OwningBasePawn->Implements<UDestructible>())
+	{
+		OwningBasePawn->DestroyPawn();
+	}
+
+	if (ToonTanksGameModeBase)
 	{
 		ToonTanksGameModeBase->ActorDied(GetOwner());
 	}
+	
 }
+
 
 // Called every frame
 void UHealthComponent::TickComponent(

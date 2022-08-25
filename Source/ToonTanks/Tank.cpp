@@ -31,9 +31,9 @@ void ATank::Tick(const float DeltaTime)
 	}
 }
 
-void ATank::HandleDestruction()
+void ATank::DestroyPawn()
 {
-	Super::HandleDestruction();
+	Super::DestroyPawn();
 
 	SetActorHiddenInGame(true);
 	SetActorTickEnabled(false);

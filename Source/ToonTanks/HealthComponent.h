@@ -6,6 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "HealthComponent.generated.h"
 
+class ABasePawn;
+
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class TOONTANKS_API UHealthComponent final : public UActorComponent
@@ -34,7 +36,12 @@ private:
 		AActor* DamageCauser
 		);
 
-	UPROPERTY()
+	/**
+	 * @brief Kills the Owner of the HealthComponent
+	 */
+	void KillOwner() const;
+	
+	// ReSharper disable once CppUE4ProbableMemoryIssuesWithUObject
 	class AToonTanksGameModeBase* ToonTanksGameModeBase;
 
 public:	

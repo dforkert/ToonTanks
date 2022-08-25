@@ -8,30 +8,33 @@
 #include "Tower.h"
 #include "Kismet/GameplayStatics.h"
 
+bool AToonTanksGameModeBase::IsWinConditionSatisfied() const
+{
+	return TargetTowersCount <= 0;
+	
+}
+
 void AToonTanksGameModeBase::ActorDied(AActor* DeadActor)
 {
-	if (ABasePawn* DeadBasePawn{Cast<ABasePawn>(DeadActor)})
+	if (Cast<ATank>(DeadActor))
 	{
-		DeadBasePawn->HandleDestruction();
-
-		if (DeadBasePawn == Tank)
+		if (ToonTanksPlayerController)
 		{
-			if (ToonTanksPlayerController)
-			{
-				ToonTanksPlayerController->SetPlayerEnabledState(false);
-			}
-			GameOver(false);
+			ToonTanksPlayerController->SetPlayerEnabledState(false);
 		}
-		else if (Cast<ATower>(DeadBasePawn))
-		{
+		GameOver(false);
+	}
+	else if (Cast<ATower>(DeadActor))
+	{
 			TargetTowersCount--;
-			if (TargetTowersCount <= 0)
-			{
-				GameOver(true);
-			}
-		}
+	}
+
+	if (IsWinConditionSatisfied())
+	{
+		GameOver(true);
 	}
 }
+
 
 
 void AToonTanksGameModeBase::BeginPlay()

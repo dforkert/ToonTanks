@@ -18,9 +18,9 @@ void ATower::Tick(const float DeltaTime)
 		}
 	}
 
-void ATower::HandleDestruction()
+void ATower::DestroyPawn()
 {
-	Super::HandleDestruction();
+	Super::DestroyPawn();
 	Destroy();
 }
 

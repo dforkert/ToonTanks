@@ -23,7 +23,7 @@ public:
 	// Called every frame
 	virtual void Tick(const float DeltaTime) override;
 
-	virtual void HandleDestruction() override;
+	virtual void DestroyPawn() override;
 
 	[[nodiscard]] APlayerController* GetTankPlayerController() const
 	{

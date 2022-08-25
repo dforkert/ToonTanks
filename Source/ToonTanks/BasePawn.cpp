@@ -26,7 +26,7 @@ ABasePawn::ABasePawn()
 	ProjectileSpawnPoint->SetupAttachment(TurretMesh);
 }
 
-void ABasePawn::HandleDestruction()
+void ABasePawn::DestroyPawn()
 {
 	if (DeathParticles)
 	{

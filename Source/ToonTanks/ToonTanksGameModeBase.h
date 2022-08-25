@@ -15,6 +15,7 @@ class TOONTANKS_API AToonTanksGameModeBase final : public AGameModeBase
 	GENERATED_BODY()
 
 public:
+	bool IsWinConditionSatisfied() const;
 	/**
 	 * @brief 
 	 * @param DeadActor 

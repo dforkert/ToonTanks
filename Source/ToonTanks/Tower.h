@@ -12,14 +12,14 @@ class ATank;
  * 
  */
 UCLASS()
-class TOONTANKS_API ATower : public ABasePawn
+class TOONTANKS_API ATower final : public ABasePawn
 {
 	GENERATED_BODY()
 
 public:
 	virtual void Tick(const float DeltaTime) override;
 
-	virtual void HandleDestruction() override;
+	virtual void DestroyPawn() override;
 
 	
 protected:
