@@ -60,18 +60,31 @@ void ATank::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &ATank::Fire);
 }
 
-void ATank::Move(const float Value)
+void ATank::PushTankAwayFromCollision(const FHitResult& MovementHitResult, const FVector& TankMovingVector)
 {
-	const float DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
-	const FVector DeltaLocation{Value*Speed*DeltaTime,0.f,0.f};
-	AddActorLocalOffset(DeltaLocation, true);
+	const FVector OrthogonalToNormalInXY{-MovementHitResult.Normal.Y, MovementHitResult.Normal.X, 0.f};
+	AddActorWorldOffset(TankMovingVector.ProjectOnTo(OrthogonalToNormalInXY), true);
 }
 
-void ATank::Turn(const float Value)
+void ATank::Move(const float ControllerAxisValue)
+{
+	const float DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
+	const FVector DeltaLocation{ControllerAxisValue * Speed * DeltaTime, 0.f, 0.f};
+	FHitResult MovementHitResult;
+	AddActorLocalOffset(DeltaLocation, true, &MovementHitResult);
+
+	if (MovementHitResult.bBlockingHit)
+	{
+		const FVector ActorMovingVector{GetActorForwardVector() * DeltaLocation.X};
+		PushTankAwayFromCollision(MovementHitResult, ActorMovingVector);
+	}
+}
+
+void ATank::Turn(const float ControllerAxisValue)
 {
 	const float DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
 	// ReSharper disable once CppLocalVariableMayBeConst
-	FRotator DeltaRotation{0.f, Value*RotationSpeed*DeltaTime, 0.f};
+	FRotator DeltaRotation{0.f, ControllerAxisValue*RotationSpeed*DeltaTime, 0.f};
 	AddActorLocalRotation(DeltaRotation, true);
 }
 
