@@ -41,11 +41,11 @@ void AProjectile::BeginPlay()
 }
 
 void AProjectile::OnHit(
-	UPrimitiveComponent* HitComp,
+	UPrimitiveComponent* /*HitComp*/,
 	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	FVector NormalImpulse,
-	const FHitResult& Hit
+	UPrimitiveComponent* /*OtherComp*/,
+	FVector /*NormalImpulse*/,
+	const FHitResult& /*Hit*/
 	)
 {
 	const AActor* ProjectileOwner{GetOwner()};

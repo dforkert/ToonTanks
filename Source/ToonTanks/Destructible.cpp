@@ -3,4 +3,4 @@
 
 #include "Destructible.h"
 
-// Add default functionality here for any IDestructable functions that are not pure virtual.
+// Add default functionality here for any IDestructible functions that are not pure virtual.
