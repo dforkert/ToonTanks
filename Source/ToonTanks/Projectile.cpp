@@ -40,6 +40,11 @@ void AProjectile::BeginPlay()
 	}
 }
 
+void AProjectile::DestroyProjectile()
+{
+	Destroy();
+}
+
 void AProjectile::OnHit(
 	UPrimitiveComponent* /*HitComp*/,
 	AActor* OtherActor,
@@ -53,7 +58,7 @@ void AProjectile::OnHit(
 	// destroy the particle as well 
 	if (!ProjectileOwner)
 	{
-		Destroy();
+		DestroyProjectile();
 		return;
 	}
 	
@@ -90,8 +95,7 @@ void AProjectile::OnHit(
 			GetWorld()->GetFirstPlayerController()->ClientStartCameraShake(HitCameraShakeClass);
 		}
 	}
-	
-	Destroy();
+	DestroyProjectile();
 }
 
 

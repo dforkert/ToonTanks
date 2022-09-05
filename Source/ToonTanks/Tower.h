@@ -32,10 +32,10 @@ private:
 	ATank* Tank;
 
 	
-	UPROPERTY(EditDefaultsOnly, Category="Tower Combat")
+	UPROPERTY(EditAnywhere, Category="Tower Combat")
 	float FireRange{500.f};
 
-	UPROPERTY(EditDefaultsOnly, Category="Tower Combat")
+	UPROPERTY(EditAnywhere, Category="Tower Combat")
 	float FireRate{2.f};
 	FTimerHandle FireRateTimerHandle;
 

@@ -9,7 +9,7 @@
 class UProjectileMovementComponent;
 
 UCLASS()
-class TOONTANKS_API AProjectile final : public AActor
+class TOONTANKS_API AProjectile : public AActor
 {
 	GENERATED_BODY()
 
@@ -17,16 +17,23 @@ public:
 	// Sets default values for this actor's properties
 	AProjectile();
 
+	UPROPERTY(VisibleAnywhere, Category="Projectile Components")
+	UProjectileMovementComponent* ProjectileMovement;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	/**
+	 * @brief Destroys the Projectile object and its related Actors (e.g. ProjectileHoming Actors)
+	 */
+	UFUNCTION()
+	virtual void DestroyProjectile();
+
+	
 private:
 	UPROPERTY(EditDefaultsOnly, Category="Projectile Components")
 	UStaticMeshComponent* ProjectileMesh;
-
-	UPROPERTY(VisibleAnywhere, Category="Projectile Components")
-	UProjectileMovementComponent* ProjectileMovement;
 	
 	UPROPERTY(VisibleAnywhere, Category="Projectile Components")
 	UParticleSystemComponent* ProjectileSmokeTrail;
@@ -54,8 +61,4 @@ private:
 		FVector NormalImpulse,
 		const FHitResult& Hit
 		);
-
-	
-
-	
 };
