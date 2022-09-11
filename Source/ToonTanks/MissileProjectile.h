@@ -21,12 +21,6 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	// TODO: do we need this anymore?
-	/**
-	 * @brief Destroys the corresponding ProjectileHoming Actor, before destroying the Projectile itself
-	 */
-	virtual void DestroyProjectile() override;
-
 private:
 	UPROPERTY(EditAnywhere, DisplayName="Projectile Homing Type", Category="Combat")
 	TSubclassOf<UProjectileHomingBase> ProjectileHomingClass;
@@ -37,8 +31,5 @@ private:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
-	
-	
 
 };

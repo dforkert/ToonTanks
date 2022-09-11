@@ -3,11 +3,10 @@
 
 #include "MissileProjectile.h"
 
-#include "EigenExternal.h"
 #include "Tank.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "ProjectileClasses/ProjectileHomingBase.h"
+#include "ProjectileHoming//ProjectileHomingBase.h"
 
 // Sets default values
 AMissileProjectile::AMissileProjectile()
@@ -27,19 +26,13 @@ void AMissileProjectile::BeginPlay()
 	Super::BeginPlay();
 
 
-	FString Prediction = FEigenExternalModule::GetLMPrediction();
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Prediction: ") + Prediction);
-
 	// TODO: Get ActorOfClass is slow!!!!
 	const AActor* Target = UGameplayStatics::GetActorOfClass(this, ATank::StaticClass());
 
 	// TODO: refactor this into functions
 	if (ProjectileHomingClass)
 	{
-		ProjectileHoming = NewObject<UProjectileHomingBase>(this, ProjectileHomingClass, TEXT("Projectile Homing Scene Component"));
-		ProjectileHoming->RegisterComponent();
-		
-		ProjectileMovement->HomingTargetComponent = ProjectileHoming;
+		ProjectileHoming->SpawnProjectileHomingComponent(this, ProjectileHomingClass, ProjectileMovement, Target);
 	}
 	else
 	{
@@ -48,27 +41,8 @@ void AMissileProjectile::BeginPlay()
 	
 }
 
-void AMissileProjectile::DestroyProjectile()
-{
-	if (ProjectileHoming)
-	{
-		// TODO: remove?
-	}
-	Super::DestroyProjectile();
-}
-
 // Called every frame
 void AMissileProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (ProjectileHoming)
-	{
-		// TODO: Get ActorOfClass is slow!!!!
-		const AActor* Target = UGameplayStatics::GetActorOfClass(this, ATank::StaticClass());
-		const FVector TargetLocation{Target->GetRootComponent()->GetComponentLocation()};
-		
-		ProjectileHoming->UpdateProjectileHomingLocation(TargetLocation, ProjectileMovement, DeltaTime);
-	}
-
 }
