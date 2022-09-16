@@ -68,9 +68,6 @@ void USimpleLinearProjectileHoming::UpdateProjectileHomingLocation(const float D
 			const FVector OldTargetLocation{PositionBuffer->GetElement().Value};
 			const FVector ProjectileLocation{ProjectileMovement->GetOwner()->GetActorLocation()};
 			const FVector ProjectileVelocity{ProjectileMovement->Velocity};
-
-			DrawDebugDirectionalArrow(GetWorld(), ProjectileLocation, ProjectileLocation + ProjectileVelocity, 100.f, FColor::Emerald);
-
 			const FVector PredictedTargetLocation{
 				PredictSimpleLinearTargetLocation(
 					ProjectileVelocity,
@@ -79,12 +76,12 @@ void USimpleLinearProjectileHoming::UpdateProjectileHomingLocation(const float D
 					TargetLocation,
 					DeltaTime)
 			};
-				
 			SetWorldLocation(PredictedTargetLocation);
 			
-			DrawDebugDirectionalArrow(GetWorld(), TargetLocation, PredictedTargetLocation, 100.f, FColor::Red);
-			DrawDebugCrosshairs(GetWorld(), OldTargetLocation, FRotator::ZeroRotator, 300.f, FColor::Green);
-			DrawDebugCrosshairs(GetWorld(), PredictedTargetLocation, FRotator::ZeroRotator, 300.f, FColor::Red);
+			#if WITH_EDITOR
+				DrawDebugCrosshairs(GetWorld(), TargetLocation, FRotator::ZeroRotator, 200.f, FColor::Green);
+				DrawDebugCrosshairs(GetWorld(), PredictedTargetLocation, FRotator::ZeroRotator, 200.f, FColor::Blue);
+			#endif
 		}
 		
 		PositionBuffer->PushNewElement(FDeltaTimeLocationPair{DeltaTime, TargetLocation});

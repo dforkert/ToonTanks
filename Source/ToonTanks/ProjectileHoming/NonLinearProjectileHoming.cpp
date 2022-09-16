@@ -42,44 +42,70 @@ void UNonLinearProjectileHoming::BeginPlay()
 
 }
 
-// TODO: add warning if DeltaTime < MIN_TICK_TIME (= 1e-6f; protected member in ProjectileMovement Component) or use SMALL_NUMBER macro
+FVector UNonLinearProjectileHoming::PredictTargetLocation(
+	const float DeltaTime,
+	const FVector ProjectileLocation,
+	const FVector TargetLocation
+)
+{
+	const float OldDeltaTime = PositionBuffer->GetElement().Key;
+	if (OldDeltaTime > 0) // Check if there is there is already a position sample in the buffer
+	{
+		const FVector OldTargetLocation = PositionBuffer->GetElement().Value;
+		const FVector ProjectileVelocity = ProjectileMovement->Velocity;
+		const FVector PredictedTargetLocationGuess{
+			PredictSimpleLinearTargetLocation(
+				ProjectileVelocity,
+				ProjectileLocation,
+				OldTargetLocation,
+				TargetLocation,
+				DeltaTime
+			)
+		};
+		const FVector LMPredictedTargetLocation = LMTargetPredictor.LMPredictTargetLocation(
+			ProjectileLocation,
+			ProjectileVelocity,
+			TargetLocation,
+			(TargetLocation - OldTargetLocation) / DeltaTime,
+			PredictedTargetLocationGuess
+		);
+
+		#if WITH_EDITOR
+			DrawDebugCrosshairs(GetWorld(), TargetLocation, FRotator::ZeroRotator, 200.f, FColor::Green);
+			DrawDebugCrosshairs(GetWorld(), PredictedTargetLocationGuess, FRotator::ZeroRotator, 200.f, FColor::Blue);
+			DrawDebugCrosshairs(GetWorld(), LMPredictedTargetLocation, FRotator::ZeroRotator, 200.f, FColor::Red);
+		#endif
+
+		return LMPredictedTargetLocation;
+	}
+	else
+	{
+		return TargetLocation;
+	}
+}
+
 void UNonLinearProjectileHoming::UpdateProjectileHomingLocation(const float DeltaTime)
- {
+{
+	ensure(DeltaTime > SMALL_NUMBER);
+	ensure(ProjectileMovement && PositionBuffer);
+
 	if (ProjectileMovement && PositionBuffer)
 	{
+		const FVector ProjectileLocation = ProjectileMovement->GetOwner()->GetActorLocation();
 		const FVector TargetLocation{TargetActor->GetActorLocation()};
 
-		const float OldDeltaTime =  PositionBuffer->GetElement().Key;
-		if (OldDeltaTime > 0)	// Check if there is there is already a position sample in the buffer
-			{
-			const FVector OldTargetLocation = PositionBuffer->GetElement().Value;
-			const FVector ProjectileLocation = ProjectileMovement->GetOwner()->GetActorLocation();
-			const FVector ProjectileVelocity = ProjectileMovement->Velocity;
-			const FVector PredictedTargetLocationGuess{
-				PredictSimpleLinearTargetLocation(
-					ProjectileVelocity,
-					ProjectileLocation,
-					OldTargetLocation,
-					TargetLocation,
-					DeltaTime
-					)
+		if (FVector::Dist(ProjectileLocation, TargetLocation) < MinLMPredictionDistance)
+		{
+			SetWorldLocation(TargetLocation);
+		}
+		else
+		{
+			const FVector PredictedTargetLocation{
+				PredictTargetLocation(DeltaTime, ProjectileLocation, TargetLocation)
 			};
-			FVector LMPredictedTargetLocation = LMTargetPredictor.LMPredictTargetLocation(
-				ProjectileLocation,
-				ProjectileVelocity,
-				TargetLocation,
-				(TargetLocation - OldTargetLocation)/DeltaTime,
-				PredictedTargetLocationGuess
-			); 
-			SetWorldLocation(LMPredictedTargetLocation);
+			SetWorldLocation(PredictedTargetLocation);
+		}
 
-			#if WITH_EDITOR
-				DrawDebugCrosshairs(GetWorld(), TargetLocation, FRotator::ZeroRotator, 200.f, FColor::Green);
-				DrawDebugCrosshairs(GetWorld(), PredictedTargetLocationGuess, FRotator::ZeroRotator, 200.f, FColor::Blue);
-				DrawDebugCrosshairs(GetWorld(), LMPredictedTargetLocation, FRotator::ZeroRotator, 200.f, FColor::Red);
-			#endif
-			}
-		
 		PositionBuffer->PushNewElement(FDeltaTimeLocationPair{DeltaTime, TargetLocation});
 	}
- }
+}
