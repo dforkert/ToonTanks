@@ -23,71 +23,6 @@ void FEigenExternalModule::ShutdownModule()
 	// we call this function before unloading the module.
 }
 
-
-using FComputeProjectileVelocityFuncRef = FEigenExternalModule::FLMTargetPredictor::FComputeProjectileVelocityFuncRef;
-/**
-     * @brief  Defines the functor to be minimized by the LM-algorithm;
-     * the functor uses double instead of float to prevent numerical instability
-     */
-struct TargetLocationFunctor : Eigen::DenseFunctor<double>
-{
-    explicit TargetLocationFunctor(const FComputeProjectileVelocityFuncRef& InComputeProjectileVelocity) :
-        DenseFunctor<double>(3, 3), ComputeProjectileVelocity{InComputeProjectileVelocity} {}
-    
-    FComputeProjectileVelocityFuncRef ComputeProjectileVelocity;
-    
-    Eigen::Vector3d MLoc{0., 0., 0.};
-    double MSpeed = 0.;
-    Eigen::Vector3d TLoc{0., 0., 0.};
-    Eigen::Vector3d TVel{0., 0., 0.};
-
-   
-    int operator()(const Eigen::VectorXd& x, Eigen::VectorXd& fvec) const
-    {
-        double yaw = x[0]; // radian
-        double pitch = x[1]; // radian
-        double t = x[2];
-
-        Eigen::AngleAxisd yawAngle(yaw, Eigen::Vector3d::UnitZ());
-        Eigen::AngleAxisd pitchAngle(pitch, Eigen::Vector3d::UnitY());
-
-        Eigen::Vector3d MDir = yawAngle * pitchAngle * Eigen::Vector3d::UnitX();
-
-        assert(x.size()==4);
-        assert(fvec.size()==3);
-
-        fvec = TLoc + TVel * t*t - MLoc - MDir * MSpeed * t*t;
-
-        return 0;
-    }
-};
-    
-
-/**
- * @brief Wrapper struct to hide Eigen's functor classes/structs from the interface header
- */
-struct FLMWrapper
-{
-    explicit FLMWrapper(const FComputeProjectileVelocityFuncRef& InComputeProjectileVelocityFuncRef) :
-        DiffFunctor{TargetLocationFunctor{InComputeProjectileVelocityFuncRef}} {}
-
-    // TargetLocationFunctor must be initialized with a valid InComputeProjectileVelocityFuncRef
-    Eigen::NumericalDiff<TargetLocationFunctor> DiffFunctor;
-    Eigen::LevenbergMarquardt<Eigen::NumericalDiff<TargetLocationFunctor>> Solver{DiffFunctor};
-};
-
-FEigenExternalModule::FLMTargetPredictor::FLMTargetPredictor() = default;
-FEigenExternalModule::FLMTargetPredictor::~FLMTargetPredictor() = default;
-
-void FEigenExternalModule::FLMTargetPredictor::InitializeLMTargetPredictor(
-    const FComputeProjectileVelocityFuncRef& InComputeProjectileVelocityFuncRef,
-    const uint32 MaxFunctionEvaluations)
-{
-    LMWrapper = MakeUnique<FLMWrapper>(InComputeProjectileVelocityFuncRef);
-    LMWrapper->Solver.setMaxfev(MaxFunctionEvaluations);
-}
-
-
 //TODO: how can we improve performance of these helper functions?
 static Eigen::Vector3d FVectorToVector3d(const FVector& InVector)
 {
@@ -100,6 +35,70 @@ static FVector VectorXdToFVector(const Eigen::VectorXd& InVector)
 }
 
 
+
+using FSimulateProjectileLocationFunc = FEigenExternalModule::FLMTargetPredictor::FSimulateProjectileLocationFunc;
+/**
+     * @brief  Defines the functor to be minimized by the LM-algorithm;
+     * the functor uses double instead of float to prevent numerical instability
+     */
+struct TargetLocationFunctor : Eigen::DenseFunctor<double>
+{
+    explicit TargetLocationFunctor(FSimulateProjectileLocationFunc& InSimulateProjectileLocation) :
+        DenseFunctor<double>(3, 3), SimulateProjectileLocation{MoveTemp(InSimulateProjectileLocation)} {}
+
+    FSimulateProjectileLocationFunc SimulateProjectileLocation;
+    
+    Eigen::Vector3d MLoc{0., 0., 0.};
+    double MSpeed = 0.;
+    Eigen::Vector3d TLoc{0., 0., 0.};
+    Eigen::Vector3d TVel{0., 0., 0.};
+
+   
+    int operator()(const Eigen::VectorXd& x, Eigen::VectorXd& fvec) const
+    {
+        assert(x.size()==4);
+        assert(fvec.size()==3);
+
+        // fvec = TLoc + TVel * x.norm() - MLoc - x * MSpeed;
+       
+        fvec = TLoc + TVel * x.norm() - FVectorToVector3d(SimulateProjectileLocation(VectorXdToFVector(x.normalized()), x.norm()));
+
+        return 0;
+    }
+};
+    
+
+/**
+ * @brief Wrapper struct to hide Eigen's functor classes/structs from the interface header
+ */
+struct FLMWrapper
+{
+    explicit FLMWrapper(FSimulateProjectileLocationFunc& InComputeProjectileVelocityFuncRef) :
+        DiffFunctor{TargetLocationFunctor{InComputeProjectileVelocityFuncRef}} {}
+
+    // TargetLocationFunctor must be initialized with a valid InComputeProjectileVelocityFuncRef
+    Eigen::NumericalDiff<TargetLocationFunctor> DiffFunctor;
+    Eigen::LevenbergMarquardt<Eigen::NumericalDiff<TargetLocationFunctor>> Solver{DiffFunctor};
+};
+
+FEigenExternalModule::FLMTargetPredictor::FLMTargetPredictor() = default;
+FEigenExternalModule::FLMTargetPredictor::~FLMTargetPredictor() = default;
+
+/**
+ * @brief Initializes the LMTargetPredictor member;
+ * initialization is required before LMPredictTargetLocation can be called;
+ * @param InComputeProjectileVelocityFunc TFunction object for computing the projectile velocity; object is consumed by this function
+ * @param MaxFunctionEvaluations Number of max function evaluations the LM algorithm is allowed to perform
+ */
+void FEigenExternalModule::FLMTargetPredictor::InitializeLMTargetPredictor(
+    FSimulateProjectileLocationFunc& InComputeProjectileVelocityFunc,
+    const uint32 MaxFunctionEvaluations)
+{
+    LMWrapper = MakeUnique<FLMWrapper>(InComputeProjectileVelocityFunc);
+    LMWrapper->Solver.setMaxfev(MaxFunctionEvaluations);
+}
+
+
 FVector FEigenExternalModule::FLMTargetPredictor::LMPredictTargetLocation(
     FVector InCurrentProjectileLocation,
     FVector InCurrentProjectileVelocity,
@@ -107,26 +106,38 @@ FVector FEigenExternalModule::FLMTargetPredictor::LMPredictTargetLocation(
     FVector InCurrentTargetVelocity,
     FVector InPredictedTargetLocationGuess)
 {
-    int cinfo, info;
- 
+    check(LMWrapper.IsValid());
     LMWrapper->DiffFunctor.MLoc = FVectorToVector3d(InCurrentProjectileLocation);
     LMWrapper->DiffFunctor.MSpeed = InCurrentProjectileVelocity.Length();
     LMWrapper->DiffFunctor.TLoc = FVectorToVector3d(InCurrentTargetLocation);
     LMWrapper->DiffFunctor.TVel = FVectorToVector3d(InCurrentTargetVelocity);
 
-    // the following starting values provide a rough fit. 
-    Eigen::VectorXd TPred = FVectorToVector3d(InPredictedTargetLocationGuess);
+    // compute a guess for the starting value of TPred: 
+    FVector MToTGuess{InPredictedTargetLocationGuess - InCurrentProjectileLocation};
+    double MSpeed{InCurrentProjectileVelocity.Length()};
+    // tGuess: guess for time until projectile reaches target
+    double tGuess{FMath::Max(MToTGuess.Length(), DOUBLE_SMALL_NUMBER) / MSpeed};
+    // TODO: rename TPred to something more meaningful, e.g. optimal Missile Acceleration 
+    Eigen::VectorXd TPred{FVectorToVector3d(MToTGuess.GetSafeNormal() * tGuess)};
+
+    // TODO: move this to a better position:
+    // LMWrapper->Solver.setFtol(0.1);
     
-    info = LMWrapper->Solver.minimize(TPred);
-    cinfo = LMWrapper->Solver.info();
-    int nfev = LMWrapper->Solver.nfev();
-    //Eigen::NumericalDiff<lmdif_functor> numDiff(functor);
-    //info = Eigen::LevenbergMarquardt<lmder_functor>::lmdif1(functor, x, &nfev);
+    const int info = LMWrapper->Solver.minimize(TPred);
+    const int cinfo = LMWrapper->Solver.info();
+    const int nfev = LMWrapper->Solver.nfev();
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::White,
-    FString::Printf(TEXT("Prediction: %f, %f, %f; info: %i, nfev: %i, cinfo: %i "), TPred[0], TPred[1], TPred[2], info, nfev, cinfo)
+    FString::Printf(TEXT("T until impact: %f; info: %i, nfev: %i, cinfo: %i "), TPred.norm(), info, nfev, cinfo)
         );
-        
-    return VectorXdToFVector(TPred);
+    
+    const FVector PredictedTargetLocation{
+        LMWrapper->DiffFunctor.SimulateProjectileLocation(VectorXdToFVector(TPred.normalized()), TPred.norm())
+    };
+    
+    UE_LOG(LogTemp, Warning, TEXT("InPredictedTargetLocationGuess: %s"), *InPredictedTargetLocationGuess.ToString());
+    UE_LOG(LogTemp, Warning, TEXT("                           out: %s"), *PredictedTargetLocation.ToString());
+    
+    return PredictedTargetLocation;
 }
 
 

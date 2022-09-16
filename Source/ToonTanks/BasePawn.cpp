@@ -57,15 +57,19 @@ void ABasePawn::DestroyPawn()
  */
 void ABasePawn::RotateTurret(const FVector LookAtTarget, const float DeltaTime) const
 {
-	const FVector ToTarget{LookAtTarget - TurretMesh->GetComponentLocation()};
-	const FRotator LookAtRotation{0.f, ToTarget.Rotation().Yaw, 0.f};
-	TurretMesh->SetWorldRotation(
-		FMath::RInterpTo(
-			TurretMesh->GetComponentRotation(),
-			LookAtRotation,
-			DeltaTime,
-			15.f)
-	);
+	if (TurretMesh->Mobility == EComponentMobility::Movable)
+	{
+		const FVector ToTarget{LookAtTarget - TurretMesh->GetComponentLocation()};
+		FRotator LookAtRotation{TurretMesh->GetComponentRotation()};
+		LookAtRotation.Yaw = ToTarget.Rotation().Yaw;
+		TurretMesh->SetWorldRotation(
+			FMath::RInterpTo(
+				TurretMesh->GetComponentRotation(),
+				LookAtRotation,
+				DeltaTime,
+				15.f)
+		);
+	}
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst

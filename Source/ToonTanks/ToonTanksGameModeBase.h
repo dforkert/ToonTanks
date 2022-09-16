@@ -16,15 +16,17 @@ class TOONTANKS_API AToonTanksGameModeBase final : public AGameModeBase
 
 public:
 	bool IsWinConditionSatisfied() const;
-	/**
-	 * @brief 
-	 * @param DeadActor 
-	 */
+
+	void ActorTookDamage(AActor* DeadActor, float CurrentHealth, float MaxHealth);
+	
 	void ActorDied(AActor* DeadActor);
 
 protected:
 	virtual void BeginPlay() override;
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void PlayerTankTookDamage(float CurrentHealth, float MaxHealth);
+	
 	UFUNCTION(BlueprintImplementableEvent)
 	void StartGame();
 
@@ -33,7 +35,7 @@ protected:
 
 
 private:
-	// ReSharper disable once CppUE4ProbableMemoryIssuesWithUObject
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player Pawns", meta=(AllowPrivateAccess="true"))
 	class ATank* Tank;
 	// ReSharper disable once CppUE4ProbableMemoryIssuesWithUObject
 	class AToonTanksPlayerController* ToonTanksPlayerController;

@@ -31,15 +31,15 @@ public:
 		FLMTargetPredictor(const FLMTargetPredictor&) = delete;
 		FLMTargetPredictor& operator=(const FLMTargetPredictor&) = delete;
 		
-		
-		using FComputeProjectileVelocityFuncRef = TFunctionRef<FVector(FVector InitialVelocity, float InDeltaTime)>;
+		// double DeltaTime improves numerical stability of the LM-algorithm
+		using FSimulateProjectileLocationFunc = TFunction<FVector(FVector UnitDirFromProjectileToTarget, double Time)>;
 		/**
 		 * @brief Initializes the member LMWrapper
-		 * @param InComputeProjectileVelocityFuncRef TFunctionRef to the a function which computes the projectile velocity
+		 * @param InComputeProjectileVelocityFunc TFunctionRef to the a function which computes the projectile velocity
 		 * @param MaxFunctionEvaluations maximum of allowed function evaluations when executing the LM-algorithm
 		 */
 		void InitializeLMTargetPredictor(
-			const FComputeProjectileVelocityFuncRef& InComputeProjectileVelocityFuncRef,
+			FSimulateProjectileLocationFunc& InComputeProjectileVelocityFunc,
 			const uint32 MaxFunctionEvaluations = 2000u
 		);
 		

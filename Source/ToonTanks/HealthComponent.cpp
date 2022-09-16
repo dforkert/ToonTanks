@@ -45,10 +45,22 @@ void UHealthComponent::TakeDamage(
 	{
 		return;
 	}
-	Health -= DamageAmount;
+	
+	Health = FMath::Max(0.f, Health - DamageAmount);
+
+	DamageOwner();
+	
 	if (Health <= 0.f)
 	{
 		KillOwner();
+	}
+}
+
+void UHealthComponent::DamageOwner() const
+{
+	if (ToonTanksGameModeBase)
+	{
+		ToonTanksGameModeBase->ActorTookDamage(GetOwner(), Health, MaxHealth);
 	}
 }
 

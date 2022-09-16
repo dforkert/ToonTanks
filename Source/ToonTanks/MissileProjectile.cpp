@@ -32,7 +32,7 @@ void AMissileProjectile::BeginPlay()
 	// TODO: refactor this into functions
 	if (ProjectileHomingClass)
 	{
-		ProjectileHoming->SpawnProjectileHomingComponent(this, ProjectileHomingClass, ProjectileMovement, Target);
+		ProjectileHoming = UProjectileHomingBase::SpawnProjectileHomingComponent(this, ProjectileHomingClass, ProjectileMovement, Target);
 	}
 	else
 	{

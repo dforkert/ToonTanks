@@ -19,18 +19,31 @@ void UNonLinearProjectileHoming::BeginPlay()
 {
 	Super::BeginPlay();
 
-	const TFunctionRef<FVector(FVector InitialVelocity, float InDeltaTime)> ComputeProjectileVelocityFuncRef{
-		[this](FVector InitialVelocity, float InDeltaTime)-> FVector
+	check(IsValid(ProjectileMovement));
+	// TODO: make this a function template to get rid of the FVector <-> VectorXd conversions
+	// TODO: include the complete fvec definition in this function
+	FEigenExternalModule::FLMTargetPredictor::FSimulateProjectileLocationFunc SimulateProjectileLocationFunc{
+		[this](FVector UnitDirFromProjectileToTarget, double Time)-> FVector
 		{
-			return ProjectileMovement->ComputeVelocity(InitialVelocity, InDeltaTime);
+			const FVector ProjectileLocation_0 = ProjectileMovement->GetOwner()->GetActorLocation();
+			const FVector ProjectileVelocity_0 = ProjectileMovement->Velocity;
+			
+			FVector ProjectileAcceleration = UnitDirFromProjectileToTarget * ProjectileMovement->HomingAccelerationMagnitude;
+			ProjectileAcceleration.Z += ProjectileMovement->GetGravityZ();
+
+			const FVector ProjectileVelocity_Time = ProjectileMovement->LimitVelocity(ProjectileVelocity_0 + ProjectileAcceleration*Time);
+			// Velocity verlet: x_t = x_0 + (v_0 + v_t) * t/2 
+			return ProjectileLocation_0 + (ProjectileVelocity_0 + ProjectileVelocity_Time)*( 0.5 * Time);
 		}
 	};
-	LMTargetPredictor.InitializeLMTargetPredictor(ComputeProjectileVelocityFuncRef);
+	// TODO: convert InitializeLMTargetPredictor into a template with typenames for FVector and VectorXd?
+	// ComputeProjectileVelocityFuncRef will be consumed by InitializeLMTargetPredictor
+	LMTargetPredictor.InitializeLMTargetPredictor(SimulateProjectileLocationFunc);
+
 }
 
 // TODO: add warning if DeltaTime < MIN_TICK_TIME (= 1e-6f; protected member in ProjectileMovement Component) or use SMALL_NUMBER macro
-void UNonLinearProjectileHoming::UpdateProjectileHomingLocation(
-	const float DeltaTime)
+void UNonLinearProjectileHoming::UpdateProjectileHomingLocation(const float DeltaTime)
  {
 	if (ProjectileMovement && PositionBuffer)
 	{
@@ -42,43 +55,29 @@ void UNonLinearProjectileHoming::UpdateProjectileHomingLocation(
 			const FVector OldTargetLocation = PositionBuffer->GetElement().Value;
 			const FVector ProjectileLocation = ProjectileMovement->GetOwner()->GetActorLocation();
 			const FVector ProjectileVelocity = ProjectileMovement->Velocity;
-
-			DrawDebugDirectionalArrow(GetWorld(), ProjectileLocation, ProjectileLocation + ProjectileVelocity, 100.f, FColor::Emerald);
-
-			const FVector PredictedTargetLocation{
+			const FVector PredictedTargetLocationGuess{
 				PredictSimpleLinearTargetLocation(
 					ProjectileVelocity,
 					ProjectileLocation,
 					OldTargetLocation,
 					TargetLocation,
-					DeltaTime)
+					DeltaTime
+					)
 			};
-
-			////////////// TODO:
-			// TFunctionRef<FVector(FVector InitialVelocity, float InDeltaTime)> ComputeProjectileVelocity{
-			// 	ProjectileMovement->ComputeVelocity
-			// };
-			
-			///////////////////////
 			FVector LMPredictedTargetLocation = LMTargetPredictor.LMPredictTargetLocation(
 				ProjectileLocation,
 				ProjectileVelocity,
 				TargetLocation,
 				(TargetLocation - OldTargetLocation)/DeltaTime,
-				PredictedTargetLocation
-			);
-			
-			//FString Prediction = FEigenExternalModule::LMPredictTargetLocation(,,,,);
-			// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Prediction: ") + Prediction);
-			
-				
-			SetWorldLocation(PredictedTargetLocation);
-			
-			DrawDebugDirectionalArrow(GetWorld(), TargetLocation, PredictedTargetLocation, 100.f, FColor::Red);
-			DrawDebugCrosshairs(GetWorld(), OldTargetLocation, FRotator::ZeroRotator, 300.f, FColor::Green);
-			DrawDebugCrosshairs(GetWorld(), PredictedTargetLocation, FRotator::ZeroRotator, 300.f, FColor::Red);
-			DrawDebugCrosshairs(GetWorld(), LMPredictedTargetLocation, FRotator::ZeroRotator, 600.f, FColor::Blue);
-			
+				PredictedTargetLocationGuess
+			); 
+			SetWorldLocation(LMPredictedTargetLocation);
+
+			#if WITH_EDITOR
+				DrawDebugCrosshairs(GetWorld(), TargetLocation, FRotator::ZeroRotator, 200.f, FColor::Green);
+				DrawDebugCrosshairs(GetWorld(), PredictedTargetLocationGuess, FRotator::ZeroRotator, 200.f, FColor::Blue);
+				DrawDebugCrosshairs(GetWorld(), LMPredictedTargetLocation, FRotator::ZeroRotator, 200.f, FColor::Red);
+			#endif
 			}
 		
 		PositionBuffer->PushNewElement(FDeltaTimeLocationPair{DeltaTime, TargetLocation});

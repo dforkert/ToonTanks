@@ -36,8 +36,14 @@ private:
 		AActor* DamageCauser
 		);
 
+
 	/**
-	 * @brief Kills the Owner of the HealthComponent
+	 * @brief Triggers when the Owner of the HealthComponent is damaged
+	 */
+	void DamageOwner() const;
+
+	/**
+	 * @brief Triggers when the Owner of the HealthComponent is killed
 	 */
 	void KillOwner() const;
 	

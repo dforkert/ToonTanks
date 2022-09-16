@@ -14,6 +14,17 @@ bool AToonTanksGameModeBase::IsWinConditionSatisfied() const
 	
 }
 
+void AToonTanksGameModeBase::ActorTookDamage(AActor* DeadActor, float CurrentHealth, float MaxHealth)
+{
+	if (Cast<ATank>(DeadActor))
+	{
+		if (ToonTanksPlayerController)
+		{
+			PlayerTankTookDamage(CurrentHealth, MaxHealth);
+		}
+	}
+}
+
 void AToonTanksGameModeBase::ActorDied(AActor* DeadActor)
 {
 	if (Cast<ATank>(DeadActor))

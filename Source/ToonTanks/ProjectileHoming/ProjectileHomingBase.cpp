@@ -11,6 +11,7 @@ UProjectileHomingBase::UProjectileHomingBase()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryComponentTick.bCanEverTick = true;
+	// SetComponentTickInterval(0.1f);
 }
 
 UProjectileHomingBase* UProjectileHomingBase::SpawnProjectileHomingComponent(
@@ -21,7 +22,6 @@ UProjectileHomingBase* UProjectileHomingBase::SpawnProjectileHomingComponent(
 )
 {
 	UProjectileHomingBase* ProjectileHoming = NewObject<UProjectileHomingBase>(Outer, ProjectileHomingClass, TEXT("Projectile Homing Component"));
-	ProjectileHoming->RegisterComponent();
 	
 	ProjectileHoming->ProjectileMovement = InProjectileMovement;
 	ProjectileHoming->TargetActor = InTargetActor;
@@ -29,6 +29,9 @@ UProjectileHomingBase* UProjectileHomingBase::SpawnProjectileHomingComponent(
 
 	// MovementComponent ticks before ProjectileHomingComponent
 	ProjectileHoming->AddTickPrerequisiteComponent(InProjectileMovement);
+
+	ProjectileHoming->RegisterComponent();
+
 
 	return ProjectileHoming;
 }
