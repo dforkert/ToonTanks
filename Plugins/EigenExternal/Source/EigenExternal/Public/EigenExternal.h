@@ -32,24 +32,31 @@ public:
 		FLMTargetPredictor& operator=(const FLMTargetPredictor&) = delete;
 		
 		// double DeltaTime improves numerical stability of the LM-algorithm
-		using FSimulateProjectileLocationFunc = TFunction<FVector(FVector UnitDirFromProjectileToTarget, double Time)>;
+		using FLMResidualFunction = TFunction<FVector(FVector UnitDirFromProjectileToTarget, double Time)>;
 		/**
 		 * @brief Initializes the member LMWrapper
 		 * @param InComputeProjectileVelocityFunc TFunctionRef to the a function which computes the projectile velocity
 		 * @param MaxFunctionEvaluations maximum of allowed function evaluations when executing the LM-algorithm
+		 * @param ResidualErrorTolerance error tolerance for the residual function 
 		 */
 		void InitializeLMTargetPredictor(
-			FSimulateProjectileLocationFunc& InComputeProjectileVelocityFunc,
-			const uint32 MaxFunctionEvaluations = 2000u
+			FLMResidualFunction& InComputeProjectileVelocityFunc,
+			const uint32 MaxFunctionEvaluations = 100u,
+			const double ResidualErrorTolerance = 0.1
 		);
 		
-		FVector LMPredictTargetLocation(
-			FVector InCurrentProjectileLocation,
-			FVector InCurrentProjectileVelocity,
-			FVector InCurrentTargetLocation,
-			FVector InCurrentTargetVelocity,
-			FVector InPredictedTargetLocationGuess
-		);
+		/**
+		 * @brief Predicts a (moving) target's location with an LM-algorithm
+		 * @param CurrentProjectileLocation 
+		 * @param CurrentProjectileSpeed 
+		 * @param PredictedTargetLocationGuess A rough guess for the predicted target location; serves as starting value for the LM-algorithm
+		 * @return TTuple consisting of the predicted unit direction vector from projectile to target and time until projectile impact
+		 */
+		TTuple<FVector, double> LMPredictTargetLocation(
+			FVector CurrentProjectileLocation,
+			double CurrentProjectileSpeed,
+			FVector PredictedTargetLocationGuess
+		) const;
 
 	private:
 		TUniquePtr<FLMWrapper> LMWrapper;

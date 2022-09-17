@@ -18,7 +18,9 @@ class TOONTANKS_API UNonLinearProjectileHoming : public USimpleLinearProjectileH
 
 public:
 	virtual void BeginPlay() override;
-	FVector PredictTargetLocation(float DeltaTime, FVector ProjectileLocation, FVector TargetLocation);
+	FVector SimulateTargetLocation(double Time) const;
+	FVector SimulateProjectileLocation(FVector UnitDirFromProjectileToTarget, double Time) const;
+	FVector PredictTargetLocation(float DeltaTime, FVector ProjectileLocation, FVector TargetLocation) const;
 
 	virtual void UpdateProjectileHomingLocation(
 		const float DeltaTime
