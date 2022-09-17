@@ -52,7 +52,7 @@ public:
 		 * @param PredictedTargetLocationGuess A rough guess for the predicted target location; serves as starting value for the LM-algorithm
 		 * @return TTuple consisting of the predicted unit direction vector from projectile to target and time until projectile impact
 		 */
-		TTuple<FVector, double> LMPredictTargetLocation(
+		TPair<FVector, double> LMPredictTargetLocation(
 			FVector CurrentProjectileLocation,
 			double CurrentProjectileSpeed,
 			FVector PredictedTargetLocationGuess

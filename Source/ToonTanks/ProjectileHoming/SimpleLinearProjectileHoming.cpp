@@ -6,18 +6,18 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 
 
-uint32 USimpleLinearProjectileHoming::FCircularSampleBuffer::GetRequestedSize() const
+uint32 USimpleLinearProjectileHoming::FCircularDeltaTimeLocationBuffer::GetCapacity() const
 {
-	return RequestedSize;
+	return Buffer.Capacity();
 }
 
-void USimpleLinearProjectileHoming::FCircularSampleBuffer::PushNewElement(FDeltaTimeLocationPair&& Element)
+void USimpleLinearProjectileHoming::FCircularDeltaTimeLocationBuffer::PushNewElement(FDeltaTimeLocationPair&& Element)
 {
 	CurrentPosition = Buffer.GetNextIndex(CurrentPosition);
 	Buffer[CurrentPosition] = Element;
 }
 
-USimpleLinearProjectileHoming::FDeltaTimeLocationPair USimpleLinearProjectileHoming::FCircularSampleBuffer::GetElement(const int32 OffSet) const
+USimpleLinearProjectileHoming::FDeltaTimeLocationPair USimpleLinearProjectileHoming::FCircularDeltaTimeLocationBuffer::GetElement(const int32 OffSet) const
 {
 	return Buffer[CurrentPosition + OffSet];
 }
@@ -34,7 +34,7 @@ void USimpleLinearProjectileHoming::InitializeSampleBuffer()
 {
 	uint32 SampleSize{1};
 	FDeltaTimeLocationPair DefaultElement{0.f, FVector::ZeroVector};
-	PositionBuffer = MakeUnique<FCircularSampleBuffer>(SampleSize, DefaultElement);
+	DeltaTimeLocationBuffer = MakeUnique<FCircularDeltaTimeLocationBuffer>(SampleSize, DefaultElement);
 }
 
 FVector USimpleLinearProjectileHoming::PredictSimpleLinearTargetLocation(
@@ -58,21 +58,24 @@ FVector USimpleLinearProjectileHoming::PredictSimpleLinearTargetLocation(
 
 void USimpleLinearProjectileHoming::UpdateProjectileHomingLocation(const float DeltaTime)
 {
-	if (ProjectileMovement && PositionBuffer)
+	if (ProjectileMovement && DeltaTimeLocationBuffer)
 	{
 		const FVector TargetLocation{TargetActor->GetActorLocation()};
+
 		
-		const float OldDeltaTime =  PositionBuffer->GetElement().Key;
-		if (OldDeltaTime > 0)	// Check if there is there is already a position sample in the buffer
+		float PreviousDeltaTime;
+		FVector PreviousTargetLocation;
+		Tie(PreviousDeltaTime, PreviousTargetLocation) = DeltaTimeLocationBuffer->GetElement();
+		
+		if (PreviousDeltaTime > 0)	// Check if there is there is already a position sample in the buffer
 		{
-			const FVector OldTargetLocation{PositionBuffer->GetElement().Value};
 			const FVector ProjectileLocation{ProjectileMovement->GetOwner()->GetActorLocation()};
 			const FVector ProjectileVelocity{ProjectileMovement->Velocity};
 			const FVector PredictedTargetLocation{
 				PredictSimpleLinearTargetLocation(
 					ProjectileVelocity,
 					ProjectileLocation,
-					OldTargetLocation,
+					PreviousTargetLocation,
 					TargetLocation,
 					DeltaTime)
 			};
@@ -84,7 +87,7 @@ void USimpleLinearProjectileHoming::UpdateProjectileHomingLocation(const float D
 			#endif
 		}
 		
-		PositionBuffer->PushNewElement(FDeltaTimeLocationPair{DeltaTime, TargetLocation});
+		DeltaTimeLocationBuffer->PushNewElement(FDeltaTimeLocationPair{DeltaTime, TargetLocation});
 	}
 
 	

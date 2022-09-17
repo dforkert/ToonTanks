@@ -26,33 +26,36 @@ protected:
 	virtual void BeginPlay() override;
 
 	using FDeltaTimeLocationPair = TPair<float, FVector>;
-
 	/**
  	* @brief Wrapper class for TCircularBuffer which adds an additional size and position variable
  	* The size variable is not rounded up to the next power of two, therefore, is always less or equal the TCircularBuffer's capacity
  	* @tparam ElementType Type of the elements of the TCircularBuffer 
  	*/
-	class FCircularSampleBuffer
+	class FCircularDeltaTimeLocationBuffer
 	{
 	public:
-		FCircularSampleBuffer(const uint32 InSampleSize, const FDeltaTimeLocationPair DefaultElement) :
-			RequestedSize{InSampleSize},
+		FCircularDeltaTimeLocationBuffer(const uint32 Size, const FDeltaTimeLocationPair DefaultElement) :
 			CurrentPosition{0},
-			Buffer{InSampleSize, DefaultElement} {};
+			Buffer{Size, DefaultElement} {};
 
-		uint32 GetRequestedSize() const;
-
+		/**
+		 * @brief Returns the capacity of the buffer
+		 */
+		uint32 GetCapacity() const;
+		/**
+		 * @brief Pushes a new element into the buffer;
+		 * thereby incrementing the current buffer position and overwriting the old element at this position
+		 * @param Element Element to be pushed into the buffer
+		 */
 		void PushNewElement(FDeltaTimeLocationPair&& Element);
-
 		FDeltaTimeLocationPair GetElement(const int32 OffSet=0) const;
 
 	private:
-		const uint32 RequestedSize;
 		uint32 CurrentPosition;
 		TCircularBuffer<FDeltaTimeLocationPair> Buffer;
 	};
 
-	TUniquePtr<FCircularSampleBuffer> PositionBuffer;
+	TUniquePtr<FCircularDeltaTimeLocationBuffer> DeltaTimeLocationBuffer;
 
 	static FVector PredictSimpleLinearTargetLocation(FVector ProjectileVelocity, FVector ProjectileLocation,
 														 FVector OldTargetLocation, FVector TargetLocation, float DeltaTime);

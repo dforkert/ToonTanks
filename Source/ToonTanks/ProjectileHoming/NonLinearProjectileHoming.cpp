@@ -11,7 +11,7 @@ void UNonLinearProjectileHoming::InitializeSampleBuffer()
 {
 	uint32 SampleSize{3};
 	FDeltaTimeLocationPair DefaultElement{0.f, FVector::ZeroVector};
-	PositionBuffer = MakeUnique<FCircularSampleBuffer>(SampleSize, DefaultElement);
+	DeltaTimeLocationBuffer = MakeUnique<FCircularDeltaTimeLocationBuffer>(SampleSize, DefaultElement);
 }
 
 
@@ -43,22 +43,22 @@ void UNonLinearProjectileHoming::BeginPlay()
 
 FVector UNonLinearProjectileHoming::SimulateTargetLocation(const double Time) const
 {
-	// TODO: improve structure of PositionBuffer!
-	TStaticArray<float, 3> DeltaTime;
-	TStaticArray<FVector, 3> TargetLocation;
-	for (int32 i = 0; i < 3; i++)
-	{
-		const TPair<float, FVector> BufferElement {PositionBuffer->GetElement(i - 2)};
-		DeltaTime[i] = BufferElement.Key;
-		TargetLocation[i] = BufferElement.Value;
-	}
+	ensure(DeltaTimeLocationBuffer->GetCapacity() >= 3);
 
-	const FVector TargetVelocity_0to1{(TargetLocation[1] - TargetLocation[0]) / DeltaTime[1]};
-	const FVector TargetVelocity_1to2{(TargetLocation[2] - TargetLocation[1]) / DeltaTime[2]};
+	[[maybe_unused]] double UnusedDeltaTime;
+	double DeltaTime_0To1, DeltaTime_1To2;	// DeltaTime_[s]To[t]: DeltaTime between frames [s] and [t]
+	FVector TargetLocation_0, TargetLocation_1, TargetLocation_2;	// TargetLocation_[t]: TargetLocation at frame [t] 
 
-	const FVector TargetAcceleration{(TargetVelocity_1to2 - TargetVelocity_0to1) * 2 / (DeltaTime[1] + DeltaTime[2])};
+	Tie(UnusedDeltaTime, TargetLocation_0) = DeltaTimeLocationBuffer->GetElement(-2);
+	Tie(DeltaTime_0To1, TargetLocation_1) = DeltaTimeLocationBuffer->GetElement(-1);
+	Tie(DeltaTime_1To2, TargetLocation_2) = DeltaTimeLocationBuffer->GetElement();
+	
+	const FVector TargetVelocity_0To1{(TargetLocation_1 - TargetLocation_0) / DeltaTime_0To1};
+	const FVector TargetVelocity_1To2{(TargetLocation_2 - TargetLocation_1) / DeltaTime_1To2};
 
-	const FVector TargetLocation_Time{TargetLocation[2] + TargetVelocity_1to2*Time + TargetAcceleration * Time*Time / 2};
+	const FVector TargetAcceleration_0To2{(TargetVelocity_1To2 - TargetVelocity_0To1) * 2 / (DeltaTime_0To1 + DeltaTime_1To2)};
+	
+	const FVector TargetLocation_Time{TargetLocation_2 + TargetVelocity_1To2*Time + TargetAcceleration_0To2 * Time*Time / 2};
 
 	/*
 	const double CurrentDeltaTime{PositionBuffer->GetElement().Key};
@@ -97,10 +97,10 @@ FVector UNonLinearProjectileHoming::PredictTargetLocation(
 	const FVector TargetLocation
 ) const
 {
-	const float OldDeltaTime = PositionBuffer->GetElement(-2).Key;
+	const float OldDeltaTime = DeltaTimeLocationBuffer->GetElement(-2).Key;
 	if (OldDeltaTime > 0) // Check if there is there are already two position samples from previous ticks in the buffer
 	{
-		const FVector OldTargetLocation = PositionBuffer->GetElement(-1).Value;
+		const FVector OldTargetLocation = DeltaTimeLocationBuffer->GetElement(-1).Value;
 		const FVector ProjectileVelocity = ProjectileMovement->Velocity;
 		const FVector PredictedTargetLocationGuess{
 			PredictSimpleLinearTargetLocation(
@@ -140,14 +140,14 @@ FVector UNonLinearProjectileHoming::PredictTargetLocation(
 void UNonLinearProjectileHoming::UpdateProjectileHomingLocation(const float DeltaTime)
 {
 	ensure(DeltaTime > SMALL_NUMBER);
-	ensure(ProjectileMovement && PositionBuffer);
+	ensure(ProjectileMovement && DeltaTimeLocationBuffer);
 
-	if (ProjectileMovement && PositionBuffer)
+	if (ProjectileMovement && DeltaTimeLocationBuffer)
 	{
 		const FVector ProjectileLocation = ProjectileMovement->GetOwner()->GetActorLocation();
 		const FVector TargetLocation{TargetActor->GetActorLocation()};
 
-		PositionBuffer->PushNewElement(FDeltaTimeLocationPair{DeltaTime, TargetLocation});
+		DeltaTimeLocationBuffer->PushNewElement(FDeltaTimeLocationPair{DeltaTime, TargetLocation});
 
 		if (FVector::Dist(ProjectileLocation, TargetLocation) < MinLMPredictionDistance)
 		{

@@ -90,7 +90,7 @@ void FEigenExternalModule::FLMTargetPredictor::InitializeLMTargetPredictor(
     LMWrapper->Solver.setFtol(ResidualErrorTolerance);
 }
 
-TTuple<FVector, double> FEigenExternalModule::FLMTargetPredictor::LMPredictTargetLocation(
+TPair<FVector, double> FEigenExternalModule::FLMTargetPredictor::LMPredictTargetLocation(
     const FVector CurrentProjectileLocation,
     const double CurrentProjectileSpeed,
     const FVector PredictedTargetLocationGuess) const
