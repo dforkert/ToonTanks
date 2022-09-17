@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Dominik Forkert. All Rights Reserved.
 
 #pragma once
 
@@ -6,10 +6,7 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-
-
 struct FLMWrapper;
-
 
 class EIGENEXTERNAL_API FEigenExternalModule final : public IModuleInterface
 {

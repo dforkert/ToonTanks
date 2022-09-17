@@ -40,7 +40,7 @@ void USimpleLinearProjectileHoming::InitializeSampleBuffer()
 FVector USimpleLinearProjectileHoming::PredictSimpleLinearTargetLocation(
 	const FVector ProjectileVelocity,
 	const FVector ProjectileLocation,
-	const FVector OldTargetLocation,
+	const FVector PreviousTargetLocation,
 	const FVector TargetLocation,
 	const float DeltaTime)
 {
@@ -52,7 +52,7 @@ FVector USimpleLinearProjectileHoming::PredictSimpleLinearTargetLocation(
 		PredictedTimeToImpact = FVector::Dist(ProjectileLocation, TargetLocation) / ProjectileSpeed;
 	}
 
-	const FVector PredictedTargetVelocity = (TargetLocation - OldTargetLocation) / DeltaTime;
+	const FVector PredictedTargetVelocity = (TargetLocation - PreviousTargetLocation) / DeltaTime;
 	return TargetLocation + PredictedTargetVelocity*PredictedTimeToImpact;
 }
 
@@ -80,11 +80,22 @@ void USimpleLinearProjectileHoming::UpdateProjectileHomingLocation(const float D
 					DeltaTime)
 			};
 			SetWorldLocation(PredictedTargetLocation);
-			
-			#if WITH_EDITOR
-				DrawDebugCrosshairs(GetWorld(), TargetLocation, FRotator::ZeroRotator, 200.f, FColor::Green);
-				DrawDebugCrosshairs(GetWorld(), PredictedTargetLocation, FRotator::ZeroRotator, 200.f, FColor::Blue);
-			#endif
+
+#if WITH_EDITOR
+			GEngine->AddOnScreenDebugMessage(43, GetComponentTickInterval(), FColor::Green,
+			                                 FString::Printf(TEXT("TargetLocation"))
+			);
+			DrawDebugCrosshairs(GetWorld(), TargetLocation, FRotator::ZeroRotator, 200.f,
+			                    FColor::Green, false, GetComponentTickInterval()
+			);
+
+			GEngine->AddOnScreenDebugMessage(44, GetComponentTickInterval(), FColor::Blue,
+			                                 FString::Printf(TEXT("PredictedTargetLocation"))
+			);
+			DrawDebugCrosshairs(GetWorld(), PredictedTargetLocation, FRotator::ZeroRotator, 200.f,
+			                    FColor::Blue, false, GetComponentTickInterval()
+			);
+#endif
 		}
 		
 		DeltaTimeLocationBuffer->PushNewElement(FDeltaTimeLocationPair{DeltaTime, TargetLocation});

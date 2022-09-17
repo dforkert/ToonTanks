@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Dominik Forkert. All Rights Reserved.
 
 #include "EigenExternal.h"
 
@@ -103,22 +103,26 @@ TPair<FVector, double> FEigenExternalModule::FLMTargetPredictor::LMPredictTarget
     const double TimeGuess{ProjectileToTargetGuess.Length() / CurrentProjectileSpeed};
 
     Eigen::VectorXd Beta{FVectorToVector3d(ProjectileToTargetGuess.GetUnsafeNormal() * TimeGuess)};
-
     
-    const int info = LMWrapper->Solver.minimize(Beta);
-    
-    const int cinfo = LMWrapper->Solver.info();
-    const int nfev = LMWrapper->Solver.nfev();
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::White,
-    FString::Printf(TEXT("T until impact: %f; info: %i, nfev: %i, cinfo: %i "), Beta.norm(), info, nfev, cinfo)
-        );
-
+    const int Status = LMWrapper->Solver.minimize(Beta);
     
     FVector PredictedUnitDirFromProjectileToTarget{VectorXdToFVector(Beta.normalized())};
     double PredictedTime{Beta.norm()};
+
+#if WITH_EDITOR
+    const int ComputationInfo = LMWrapper->Solver.info();
+    const int Iterations = LMWrapper->Solver.iterations();
+    const int NumberOfFunctionEvaluations = LMWrapper->Solver.nfev();
+    GEngine->AddOnScreenDebugMessage(42, 1.f, FColor::White,
+        FString::Printf(
+            TEXT("LM-algorithm: PredictedTime: %f; Status: %i; Iterations: %i; NumberOfFunctionEvaluations: %i; ComputationInfo: %i "),
+            PredictedTime, Status, Iterations, NumberOfFunctionEvaluations, ComputationInfo
+            )
+    );
+#endif
+    
     return {PredictedUnitDirFromProjectileToTarget, PredictedTime};
 }
-
 
 #undef LOCTEXT_NAMESPACE
 IMPLEMENT_MODULE(FEigenExternalModule, EigenExternal)

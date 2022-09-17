@@ -19,11 +19,11 @@ public:
 	UProjectileHomingBase();
 
 	/**
-	 * @brief 
-	 * @param Outer 
-	 * @param ProjectileHomingClass 
-	 * @param InProjectileMovement 
-	 * @param InTargetActor 
+	 * @brief Spawns a UProjectileHomingBase component which serves as homing target for a projectile
+	 * @param Outer The outer UObject for this component
+	 * @param ProjectileHomingClass The ProjectileHomingClass specifies the homing method to be used
+	 * @param InProjectileMovement The UProjectileMovementComponent of the projectile actor
+	 * @param InTargetActor The target for the homing projectile
 	 * @return 
 	 */
 	static UProjectileHomingBase* SpawnProjectileHomingComponent(
@@ -47,14 +47,8 @@ private:
 	UPROPERTY(VisibleAnywhere, Category="Homing")
 	USceneComponent* ProjectileHomingSceneComponent;
 
-
-
-
-	
 	/**
 	 * @brief Updates the location of the ProjectileHoming Actor
-	 * @param TargetLocation location where the ProjectileHoming Actor will be moved to
-	 * @param ProjectileMovement Pointer to the owning projectile
 	 * @param DeltaTime
 	 */
 	virtual void UpdateProjectileHomingLocation(const float DeltaTime);

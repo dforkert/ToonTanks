@@ -40,7 +40,7 @@ public class EigenExternal : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore",
+				"SlateCore", "RD",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

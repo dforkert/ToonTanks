@@ -29,7 +29,6 @@ void AMissileProjectile::BeginPlay()
 	// TODO: Get ActorOfClass is slow!!!!
 	const AActor* Target = UGameplayStatics::GetActorOfClass(this, ATank::StaticClass());
 
-	// TODO: refactor this into functions
 	if (ProjectileHomingClass)
 	{
 		ProjectileHoming = UProjectileHomingBase::SpawnProjectileHomingComponent(this, ProjectileHomingClass, ProjectileMovement, Target);

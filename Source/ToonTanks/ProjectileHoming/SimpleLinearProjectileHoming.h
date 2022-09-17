@@ -29,7 +29,6 @@ protected:
 	/**
  	* @brief Wrapper class for TCircularBuffer which adds an additional size and position variable
  	* The size variable is not rounded up to the next power of two, therefore, is always less or equal the TCircularBuffer's capacity
- 	* @tparam ElementType Type of the elements of the TCircularBuffer 
  	*/
 	class FCircularDeltaTimeLocationBuffer
 	{
@@ -40,6 +39,7 @@ protected:
 
 		/**
 		 * @brief Returns the capacity of the buffer
+		 * @return Capacity of the buffer 
 		 */
 		uint32 GetCapacity() const;
 		/**
@@ -57,8 +57,17 @@ protected:
 
 	TUniquePtr<FCircularDeltaTimeLocationBuffer> DeltaTimeLocationBuffer;
 
+	/**
+	 * @brief Target prediction based on a simple linear approximation of projectile and target trajectories
+	 * @param ProjectileVelocity The projectile's current velocity vector
+	 * @param ProjectileLocation The projectile's current location
+	 * @param PreviousTargetLocation the projectile's location in the previous tick
+	 * @param TargetLocation the current location of the target
+	 * @param DeltaTime Current DeltaTime
+	 * @return Predicted TargetLocation at time of projectile impact
+	 */
 	static FVector PredictSimpleLinearTargetLocation(FVector ProjectileVelocity, FVector ProjectileLocation,
-														 FVector OldTargetLocation, FVector TargetLocation, float DeltaTime);
+														 FVector PreviousTargetLocation, FVector TargetLocation, float DeltaTime);
 
 	
 private:

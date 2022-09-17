@@ -19,18 +19,11 @@ void UNonLinearProjectileHoming::BeginPlay()
 {
 	Super::BeginPlay();
 
-	check(IsValid(ProjectileMovement));
-	// TODO: make this a function template to get rid of the FVector <-> VectorXd conversions
-	
 	FEigenExternalModule::FLMTargetPredictor::FLMResidualFunction LMResidualFunction{
 		[this](const FVector UnitDirFromProjectileToTarget, const double Time)-> FVector
 		{
 			const FVector TargetLocation_Time{SimulateTargetLocation(Time)};
 			const FVector ProjectileLocation_Time{SimulateProjectileLocation(UnitDirFromProjectileToTarget, Time)};
-
-			DrawDebugCrosshairs(GetWorld(), TargetLocation_Time, FRotator::ZeroRotator, 500.f, FColor::Yellow);
-			DrawDebugCrosshairs(GetWorld(), ProjectileLocation_Time, FRotator::ZeroRotator, 50.f, FColor::Orange, false, 0.5);
-
 			
 			return TargetLocation_Time - ProjectileLocation_Time;
 		}
@@ -43,6 +36,7 @@ void UNonLinearProjectileHoming::BeginPlay()
 
 FVector UNonLinearProjectileHoming::SimulateTargetLocation(const double Time) const
 {
+	check(DeltaTimeLocationBuffer.IsValid());
 	ensure(DeltaTimeLocationBuffer->GetCapacity() >= 3);
 
 	[[maybe_unused]] double UnusedDeltaTime;
@@ -52,31 +46,28 @@ FVector UNonLinearProjectileHoming::SimulateTargetLocation(const double Time) co
 	Tie(UnusedDeltaTime, TargetLocation_0) = DeltaTimeLocationBuffer->GetElement(-2);
 	Tie(DeltaTime_0To1, TargetLocation_1) = DeltaTimeLocationBuffer->GetElement(-1);
 	Tie(DeltaTime_1To2, TargetLocation_2) = DeltaTimeLocationBuffer->GetElement();
-	
+
+	// forward difference quotients for the velocity v_0
 	const FVector TargetVelocity_0To1{(TargetLocation_1 - TargetLocation_0) / DeltaTime_0To1};
+	// forward difference quotients for the velocity v_1
 	const FVector TargetVelocity_1To2{(TargetLocation_2 - TargetLocation_1) / DeltaTime_1To2};
+	// central difference quotients for the velocity v_1
+	const FVector TargetVelocity_0To2{(TargetLocation_2 - TargetLocation_0) / (DeltaTime_0To1 + DeltaTime_1To2)};
 
+	// central difference quotient for the acceleration a_1
 	const FVector TargetAcceleration_0To2{(TargetVelocity_1To2 - TargetVelocity_0To1) * 2 / (DeltaTime_0To1 + DeltaTime_1To2)};
-	
-	const FVector TargetLocation_Time{TargetLocation_2 + TargetVelocity_1To2*Time + TargetAcceleration_0To2 * Time*Time / 2};
 
-	/*
-	const double CurrentDeltaTime{PositionBuffer->GetElement().Key};
-	
-	const FVector CurrentTargetLocation{PositionBuffer->GetElement().Value};
-	const FVector OldTargetLocation{PositionBuffer->GetElement(-1).Value};
-	
-	const FVector CurrentTargetVelocity{(CurrentTargetLocation - OldTargetLocation) / CurrentDeltaTime};
-	
-	// x_t = x_0 + v_0 * t
-	const FVector TargetLocation_Time{CurrentTargetLocation + CurrentTargetVelocity*Time};
-	*/
-	
+	// 2nd order taylor approximation based on central difference quotients:
+	// x_t = x_1 + v_1 * t + a_1 * t^2 / 2
+	const FVector TargetLocation_Time{TargetLocation_1 + TargetVelocity_0To2*Time + TargetAcceleration_0To2 * Time*Time * 0.5};
+
 	return TargetLocation_Time;
 }
 
 FVector UNonLinearProjectileHoming::SimulateProjectileLocation(const FVector UnitDirFromProjectileToTarget, const double Time) const
 {
+	check(IsValid(ProjectileMovement));
+
 	const FVector ProjectileLocation_0{ProjectileMovement->GetOwner()->GetActorLocation()};
 	const FVector ProjectileVelocity_0{ProjectileMovement->Velocity};
 			
@@ -84,6 +75,7 @@ FVector UNonLinearProjectileHoming::SimulateProjectileLocation(const FVector Uni
 	ProjectileAcceleration.Z += ProjectileMovement->GetGravityZ();
 
 	const FVector ProjectileVelocity_Time{ProjectileMovement->LimitVelocity(ProjectileVelocity_0 + ProjectileAcceleration*Time)};
+
 	// Velocity verlet: x_t = x_0 + (v_0 + v_t) * t/2 
 	const FVector ProjectileLocation_Time{ProjectileLocation_0 + (ProjectileVelocity_0 + ProjectileVelocity_Time)*( 0.5 * Time)};
 	
@@ -123,11 +115,27 @@ FVector UNonLinearProjectileHoming::PredictTargetLocation(
 			SimulateProjectileLocation(PredictedUnitDirFromProjectileToTarget, PredictedTime)
 		};
 
-		#if WITH_EDITOR
-			DrawDebugCrosshairs(GetWorld(), TargetLocation, FRotator::ZeroRotator, 200.f, FColor::Green);
-			DrawDebugCrosshairs(GetWorld(), PredictedTargetLocationGuess, FRotator::ZeroRotator, 200.f, FColor::Blue);
-			DrawDebugCrosshairs(GetWorld(), LMPredictedTargetLocation, FRotator::ZeroRotator, 200.f, FColor::Red);
-		#endif
+#if WITH_EDITOR
+		GEngine->AddOnScreenDebugMessage(43, GetComponentTickInterval(), FColor::Green,
+		                                 FString::Printf(TEXT("TargetLocation"))
+		);
+		DrawDebugCrosshairs(GetWorld(), TargetLocation, FRotator::ZeroRotator, 200.f,
+		                    FColor::Green, false, GetComponentTickInterval()
+		);
+
+		GEngine->AddOnScreenDebugMessage(44, GetComponentTickInterval(), FColor::Blue,
+		                                 FString::Printf(TEXT("PredictedTargetLocationGuess"))
+		);
+		DrawDebugCrosshairs(GetWorld(), PredictedTargetLocationGuess, FRotator::ZeroRotator, 200.f,
+		                    FColor::Blue, false, GetComponentTickInterval()
+		);
+
+		GEngine->AddOnScreenDebugMessage(45, GetComponentTickInterval(), FColor::Red,
+		                                 FString::Printf(TEXT("LMPredictedTargetLocation")));
+		DrawDebugCrosshairs(GetWorld(), LMPredictedTargetLocation, FRotator::ZeroRotator, 200.f,
+		                    FColor::Red, false, GetComponentTickInterval()
+		);
+#endif
 
 		return LMPredictedTargetLocation;
 	}
@@ -140,25 +148,23 @@ FVector UNonLinearProjectileHoming::PredictTargetLocation(
 void UNonLinearProjectileHoming::UpdateProjectileHomingLocation(const float DeltaTime)
 {
 	ensure(DeltaTime > SMALL_NUMBER);
-	ensure(ProjectileMovement && DeltaTimeLocationBuffer);
+	check(IsValid(ProjectileMovement));
+	check(DeltaTimeLocationBuffer.IsValid());
 
-	if (ProjectileMovement && DeltaTimeLocationBuffer)
+	const FVector ProjectileLocation = ProjectileMovement->GetOwner()->GetActorLocation();
+	const FVector TargetLocation{TargetActor->GetActorLocation()};
+
+	DeltaTimeLocationBuffer->PushNewElement(FDeltaTimeLocationPair{DeltaTime, TargetLocation});
+
+	if (FVector::Dist(ProjectileLocation, TargetLocation) < MinLMPredictionDistance)
 	{
-		const FVector ProjectileLocation = ProjectileMovement->GetOwner()->GetActorLocation();
-		const FVector TargetLocation{TargetActor->GetActorLocation()};
-
-		DeltaTimeLocationBuffer->PushNewElement(FDeltaTimeLocationPair{DeltaTime, TargetLocation});
-
-		if (FVector::Dist(ProjectileLocation, TargetLocation) < MinLMPredictionDistance)
-		{
-			SetWorldLocation(TargetLocation);
-		}
-		else
-		{
-			const FVector PredictedTargetLocation{
-				PredictTargetLocation(DeltaTime, ProjectileLocation, TargetLocation)
-			};
-			SetWorldLocation(PredictedTargetLocation);
-		}
+		SetWorldLocation(TargetLocation);
+	}
+	else
+	{
+		const FVector PredictedTargetLocation{
+			PredictTargetLocation(DeltaTime, ProjectileLocation, TargetLocation)
+		};
+		SetWorldLocation(PredictedTargetLocation);
 	}
 }
