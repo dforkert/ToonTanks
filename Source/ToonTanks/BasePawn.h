@@ -28,7 +28,7 @@ protected:
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Pawn Components", meta=(AllowPrivateAccess="true"))
-	UCapsuleComponent* CapsuleComp;
+	UCapsuleComponent* CapsuleComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Pawn Components", meta=(AllowPrivateAccess="true"))
 	UStaticMeshComponent* BaseMesh;

@@ -2,8 +2,6 @@
 
 
 #include "Projectile.h"
-#include "Projectile.h"
-
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
