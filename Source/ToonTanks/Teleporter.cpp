@@ -39,7 +39,6 @@ FVector ATeleporter::GetTeleportationLocation(const AActor* Actor) const
 {
 	const double ActorToTeleporterZOffset{Actor->GetActorLocation().Z - GetActorLocation().Z};
 	FVector TargetLocation{TargetTeleporter->GetActorLocation()};
-	UE_LOG(LogTemp, Warning, TEXT("%f"), ActorToTeleporterZOffset);
 	TargetLocation.Z += ActorToTeleporterZOffset;
 	return TargetLocation;
 }
@@ -51,15 +50,13 @@ void ATeleporter::OnBeginOverlap(
 	int32 /*OtherBodyIndex*/,
 	bool /*bFromSweep*/,
 	const FHitResult& /*Hit*/
-	)
+)
 {
-	if (OtherActor && TargetTeleporter && !bTeleporterIsBlocked)
+	if (OtherActor && TargetTeleporter && !bTeleporterIsBlocked && !TargetTeleporter->bTeleporterIsBlocked)
 	{
 		const FVector TargetLocation{GetTeleportationLocation(OtherActor)};
-
-		const bool PreviousTargetTeleporterState{TargetTeleporter->bTeleporterIsBlocked};
 		TargetTeleporter->bTeleporterIsBlocked = true;
-		
+
 		const bool bTeleportSuccessful{
 			OtherActor->TeleportTo(TargetLocation, FRotator::ZeroRotator)
 		};
@@ -72,7 +69,7 @@ void ATeleporter::OnBeginOverlap(
 		}
 		else
 		{
-			TargetTeleporter->bTeleporterIsBlocked = PreviousTargetTeleporterState;
+			TargetTeleporter->bTeleporterIsBlocked = false;
 		}
 	}
 }
@@ -86,13 +83,3 @@ void ATeleporter::OnEndOverlap(
 {
 	bTeleporterIsBlocked = false;
 }
-
-
-// TODO: most likely to be deleted
-// Called every frame
-void ATeleporter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-

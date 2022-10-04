@@ -58,13 +58,4 @@ private:
 		int32 OtherBodyIndex
 	);
 	
-
-public:
-	// TODO: most likely to be deleted
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-
-
-
 };
