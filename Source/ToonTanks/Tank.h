@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BasePawn.h"
+#include "HollowSphere.h"
 #include "Tank.generated.h"
 
 class USpringArmComponent;
@@ -55,6 +56,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	APlayerController* TankPlayerController;
 
+	UPROPERTY(VisibleInstanceOnly)
+	AHollowSphere* HollowSphere;
+	
 	/**
 	 * @brief Pushes the Tank orthogonal to the Normal of a HitResult;
 	 * the magnitude of the push is determined by the TankMovingVector projected onto the push direction
@@ -75,5 +79,11 @@ private:
 	 * @param ControllerAxisValue A positive values rotates the Tank to the left; a negative value rotates the Tank to the right
 	 */
 	void Turn(const float ControllerAxisValue);
+
+	void MoveInHollowSphere(const float ControllerAxisValue, const float DeltaTime);
+
+	void MoveInPlane(const float ControllerAxisValue, const float DeltaTime);
+	
+	bool SweepForHollowSphere(FVector SweepVector=FVector{0.f, 0.f, -10.f});
 	
 };

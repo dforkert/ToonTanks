@@ -69,6 +69,45 @@ void ATank::PushTankAwayFromCollision(const FHitResult& MovementHitResult, const
 void ATank::Move(const float ControllerAxisValue)
 {
 	const float DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+	MoveInHollowSphere(ControllerAxisValue, DeltaTime);
+	// MoveInPlane(ControllerAxisValue, DeltaTime);
+
+}
+
+void ATank::Turn(const float ControllerAxisValue)
+{
+	const float DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
+	// ReSharper disable once CppLocalVariableMayBeConst
+	FRotator DeltaRotation{0.f, ControllerAxisValue*RotationSpeed*DeltaTime, 0.f};
+	AddActorLocalRotation(DeltaRotation, true);
+}
+
+void ATank::MoveInHollowSphere(const float ControllerAxisValue, const float DeltaTime)
+{
+	//const FRotator DeltaRotation{ControllerAxisValue * Speed * DeltaTime, 0.f, 0.f};
+
+	FVector SphereCenter{100.f, 0.f, 0.f};
+	float RotationValue = ControllerAxisValue * Speed * DeltaTime/10.f;
+	FQuat DeltaRotation{GetActorRightVector(), RotationValue};
+
+	FTransform Transform{GetActorTransform()};
+
+	FVector Axis = GetActorUpVector();
+	FVector Rotation = GetActorLocation() - SphereCenter;
+
+	FVector RelativeTranslation = Rotation.RotateAngleAxis(RotationValue, Axis);
+	Transform.AddToTranslation(RelativeTranslation);
+	Transform.AddToTranslation(-Rotation);
+	//Transform.AddToTranslation(SphereCenter);
+	//Transform.ConcatenateRotation(DeltaRotation);
+	//Transform.AddToTranslation(-SphereCenter);
+
+	SetActorTransform(Transform);
+}
+
+void ATank::MoveInPlane(const float ControllerAxisValue, const float DeltaTime)
+{
 	const FVector DeltaLocation{ControllerAxisValue * Speed * DeltaTime, 0.f, 0.f};
 	FHitResult MovementHitResult;
 	AddActorLocalOffset(DeltaLocation, true, &MovementHitResult);
@@ -78,14 +117,6 @@ void ATank::Move(const float ControllerAxisValue)
 		const FVector ActorMovingVector{GetActorForwardVector() * DeltaLocation.X};
 		PushTankAwayFromCollision(MovementHitResult, ActorMovingVector);
 	}
-}
-
-void ATank::Turn(const float ControllerAxisValue)
-{
-	const float DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
-	// ReSharper disable once CppLocalVariableMayBeConst
-	FRotator DeltaRotation{0.f, ControllerAxisValue*RotationSpeed*DeltaTime, 0.f};
-	AddActorLocalRotation(DeltaRotation, true);
 }
 
 

@@ -61,14 +61,27 @@ void ABasePawn::RotateTurret(const FVector LookAtTarget, const float DeltaTime) 
 	{
 		const FVector ToTarget{LookAtTarget - TurretMesh->GetComponentLocation()};
 		FRotator LookAtRotation{TurretMesh->GetComponentRotation()};
-		LookAtRotation.Yaw = ToTarget.Rotation().Yaw;
-		TurretMesh->SetWorldRotation(
+		FRotator TankUpVectorRotation{GetActorUpVector().Rotation()};
+		FVector ToTargetLoc = LookAtRotation.UnrotateVector(ToTarget);
+		//LookAtRotation = LookAtRotation.GetInverse() + FRotator{ToTarget.Rotation().Yaw, 0., 0.} + LookAtRotation;
+		//LookAtRotation.Yaw = ToTarget.Rotation().Yaw;
+
+		FRotator LookAtRotationLoc = TurretMesh->GetRelativeRotation();
+		LookAtRotationLoc.Yaw = ToTargetLoc.Rotation().Yaw;
+		
+		TurretMesh->SetRelativeRotation(FMath::RInterpTo(
+				TurretMesh->GetRelativeRotation(),
+				LookAtRotationLoc,
+				DeltaTime,
+				15.f));
+		/*TurretMesh->SetWorldRotation(
 			FMath::RInterpTo(
 				TurretMesh->GetComponentRotation(),
 				LookAtRotation,
 				DeltaTime,
 				15.f)
 		);
+		*/
 	}
 }
 
