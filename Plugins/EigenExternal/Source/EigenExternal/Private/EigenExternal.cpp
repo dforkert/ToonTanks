@@ -9,9 +9,6 @@ THIRD_PARTY_INCLUDES_START
 #include <unsupported/Eigen/LevenbergMarquardt>
 THIRD_PARTY_INCLUDES_END
 
-// tolerance for checking number of iterations
-#define LM_EVAL_COUNT_TOL 4/3
-
 void FEigenExternalModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
@@ -41,9 +38,9 @@ using FLMResidualFunction = FEigenExternalModule::FLMTargetPredictor::FLMResidua
      * @brief  Defines the functor to be minimized by the LM-algorithm;
      * the functor uses double instead of float to prevent numerical instability
      */
-struct TargetLocationFunctor : Eigen::DenseFunctor<double>
+struct TargetLocationFunctor : public Eigen::DenseFunctor<double>
 {
-    explicit TargetLocationFunctor(FLMResidualFunction& InSimulateProjectileLocation) :
+    explicit TargetLocationFunctor(FLMResidualFunction& InSimulateProjectileLocation) : 
         DenseFunctor<double>(3, 3), LMResidualFunction{MoveTemp(InSimulateProjectileLocation)} {}
 
     // TFunction which expresses the residual in terms of UE-objects

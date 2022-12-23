@@ -59,6 +59,7 @@ void ABasePawn::RotateTurret(const FVector LookAtTarget, const float DeltaTime) 
 {
 	if (TurretMesh->Mobility == EComponentMobility::Movable)
 	{
+		// TODO: Clean up code below! Fix for Hollow Sphere movement!
 		const FVector ToTarget{LookAtTarget - TurretMesh->GetComponentLocation()};
 		FRotator LookAtRotation{TurretMesh->GetComponentRotation()};
 		FRotator TankUpVectorRotation{GetActorUpVector().Rotation()};

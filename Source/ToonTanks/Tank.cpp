@@ -70,8 +70,8 @@ void ATank::Move(const float ControllerAxisValue)
 {
 	const float DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
 
-	MoveInHollowSphere(ControllerAxisValue, DeltaTime);
-	// MoveInPlane(ControllerAxisValue, DeltaTime);
+	 MoveInHollowSphere(ControllerAxisValue, DeltaTime);
+	 //MoveInPlane(ControllerAxisValue, DeltaTime);
 
 }
 
@@ -85,23 +85,21 @@ void ATank::Turn(const float ControllerAxisValue)
 
 void ATank::MoveInHollowSphere(const float ControllerAxisValue, const float DeltaTime)
 {
-	//const FRotator DeltaRotation{ControllerAxisValue * Speed * DeltaTime, 0.f, 0.f};
-
-	FVector SphereCenter{100.f, 0.f, 0.f};
-	float RotationValue = ControllerAxisValue * Speed * DeltaTime/10.f;
-	FQuat DeltaRotation{GetActorRightVector(), RotationValue};
-
 	FTransform Transform{GetActorTransform()};
+	const FVector SphereCenter{0.f, 0.f, -4000.f};
+	const FVector CenterToPawn{GetActorLocation() - SphereCenter};
+	const float Circumference{2.f * PI * static_cast<float>(CenterToPawn.Length())};
 
-	FVector Axis = GetActorUpVector();
-	FVector Rotation = GetActorLocation() - SphereCenter;
+	const FVector RotationAxis{-GetActorRightVector()};
+	const float AngularSpeedInRad{ControllerAxisValue * Speed * DeltaTime / Circumference};
+	const float AngularSpeedInDeg{AngularSpeedInRad * 180.f / PI};	// TODO: fix
 
-	FVector RelativeTranslation = Rotation.RotateAngleAxis(RotationValue, Axis);
-	Transform.AddToTranslation(RelativeTranslation);
-	Transform.AddToTranslation(-Rotation);
-	//Transform.AddToTranslation(SphereCenter);
-	//Transform.ConcatenateRotation(DeltaRotation);
-	//Transform.AddToTranslation(-SphereCenter);
+	const FVector RotatedCenterToPawn{CenterToPawn.RotateAngleAxis(AngularSpeedInDeg, RotationAxis)};
+	const FVector MovementAlongSphere{RotatedCenterToPawn - CenterToPawn};
+	Transform.AddToTranslation(MovementAlongSphere);
+	
+	const FRotator RotationAlongSphere{AngularSpeedInDeg, 0.f, 0.f};
+	Transform.ConcatenateRotation(RotationAlongSphere.Quaternion());
 
 	SetActorTransform(Transform);
 }
