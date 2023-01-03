@@ -64,9 +64,9 @@ private:
 	 * the magnitude of the push is determined by the TankMovingVector projected onto the push direction
 	 * 
 	 * @param MovementHitResult HitResult for the Tank
-	 * @param TankMovingVector Vector corresponding to Tank movement in World coordinates
+	 * @param LocalDeltaMovement Vector corresponding to Tank movement in local coordinates
 	 */
-	void PushTankAwayFromCollision(const FHitResult& MovementHitResult, const FVector& TankMovingVector);
+	void PushTankAwayFromCollision(const FHitResult& MovementHitResult, const FVector& LocalDeltaMovement);
 
 	/**
 	 * @brief Moves the Tank along its ForwardVector according to the Controller AxisValue
@@ -84,6 +84,6 @@ private:
 
 	void MoveInPlane(const float ControllerAxisValue, const float DeltaTime);
 	
-	bool SweepForHollowSphere(FVector SweepVector=FVector{0.f, 0.f, -10.f});
+	bool TryToSetHollowSphere();
 	
 };

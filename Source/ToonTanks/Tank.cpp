@@ -60,10 +60,11 @@ void ATank::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &ATank::Fire);
 }
 
-void ATank::PushTankAwayFromCollision(const FHitResult& MovementHitResult, const FVector& TankMovingVector)
+void ATank::PushTankAwayFromCollision(const FHitResult& MovementHitResult, const FVector& LocalDeltaMovement)
 {
+	const FVector GlobalDeltaMovement{GetActorForwardVector() * LocalDeltaMovement.X};
 	const FVector OrthogonalToNormalInXY{-MovementHitResult.Normal.Y, MovementHitResult.Normal.X, 0.f};
-	AddActorWorldOffset(TankMovingVector.ProjectOnTo(OrthogonalToNormalInXY), true);
+	AddActorWorldOffset(GlobalDeltaMovement.ProjectOnTo(OrthogonalToNormalInXY), true);
 }
 
 void ATank::Move(const float ControllerAxisValue)
@@ -89,11 +90,9 @@ void ATank::MoveInHollowSphere(const float ControllerAxisValue, const float Delt
 	const FVector SphereCenter{0.f, 0.f, -4000.f};
 	const FVector CenterToPawn{GetActorLocation() - SphereCenter};
 	const float Circumference{2.f * PI * static_cast<float>(CenterToPawn.Length())};
-
+	
 	const FVector RotationAxis{-GetActorRightVector()};
-	const float AngularSpeedInRad{ControllerAxisValue * Speed * DeltaTime / Circumference};
-	const float AngularSpeedInDeg{AngularSpeedInRad * 180.f / PI};	// TODO: fix
-
+	const float AngularSpeedInDeg{ControllerAxisValue * Speed * DeltaTime * 360.f / Circumference};
 	const FVector RotatedCenterToPawn{CenterToPawn.RotateAngleAxis(AngularSpeedInDeg, RotationAxis)};
 	const FVector MovementAlongSphere{RotatedCenterToPawn - CenterToPawn};
 	Transform.AddToTranslation(MovementAlongSphere);
@@ -101,21 +100,32 @@ void ATank::MoveInHollowSphere(const float ControllerAxisValue, const float Delt
 	const FRotator RotationAlongSphere{AngularSpeedInDeg, 0.f, 0.f};
 	Transform.ConcatenateRotation(RotationAlongSphere.Quaternion());
 
-	SetActorTransform(Transform);
+	FHitResult MovementHitResult;
+	SetActorTransform(Transform, true, &MovementHitResult);
+
+	// TODO: Add PushTankAwayFromCollision; maybe refactor code for both plane and sphere
+	
 }
 
 void ATank::MoveInPlane(const float ControllerAxisValue, const float DeltaTime)
 {
-	const FVector DeltaLocation{ControllerAxisValue * Speed * DeltaTime, 0.f, 0.f};
+	const FVector LocalDeltaMovement{ControllerAxisValue * Speed * DeltaTime, 0.f, 0.f};
 	FHitResult MovementHitResult;
-	AddActorLocalOffset(DeltaLocation, true, &MovementHitResult);
+	AddActorLocalOffset(LocalDeltaMovement, true, &MovementHitResult);
 
 	if (MovementHitResult.bBlockingHit)
 	{
-		const FVector ActorMovingVector{GetActorForwardVector() * DeltaLocation.X};
-		PushTankAwayFromCollision(MovementHitResult, ActorMovingVector);
+		PushTankAwayFromCollision(MovementHitResult, LocalDeltaMovement);
 	}
 }
+
+// TODO
+/*
+bool ATank::TryToSetHollowSphere()
+{
+	UWorld::SweepSingleByObjectType()
+}
+*/
 
 
 
