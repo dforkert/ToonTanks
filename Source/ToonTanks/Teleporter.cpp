@@ -29,9 +29,6 @@ void ATeleporter::BeginPlay()
 	// Bind functions to Component Hit Event
 	CapsuleComponent->OnComponentBeginOverlap.AddDynamic(this, &ATeleporter::OnBeginOverlap);
 	CapsuleComponent->OnComponentEndOverlap.AddDynamic(this, &ATeleporter::OnEndOverlap);
-
-
-	
 }
 
 
@@ -43,6 +40,18 @@ FVector ATeleporter::GetTeleportationLocation(const AActor* Actor) const
 	return TargetLocation;
 }
 
+void ATeleporter::TrySetBasePawnMovementComponentToLocalGeometry(const AActor* Actor) const
+{
+	UBasePawnMovementComponent* OtherActorMovementComponent{
+		Cast<UBasePawnMovementComponent>(Actor->GetComponentByClass(UBasePawnMovementComponent::StaticClass()))
+	};
+	if (OtherActorMovementComponent)
+	{
+		OtherActorMovementComponent->SetMovementGeometry(LocalGeometry, SurroundingHollowSphere);
+	}
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
 void ATeleporter::OnBeginOverlap(
 	UPrimitiveComponent* /*OverlappedComp*/,
 	AActor* OtherActor,
@@ -50,7 +59,7 @@ void ATeleporter::OnBeginOverlap(
 	int32 /*OtherBodyIndex*/,
 	bool /*bFromSweep*/,
 	const FHitResult& /*Hit*/
-)
+) 
 {
 	if (OtherActor && TargetTeleporter && !bTeleporterIsBlocked && !TargetTeleporter->bTeleporterIsBlocked)
 	{
@@ -62,6 +71,8 @@ void ATeleporter::OnBeginOverlap(
 		};
 		if (bTeleportSuccessful)
 		{
+			TargetTeleporter->TrySetBasePawnMovementComponentToLocalGeometry(OtherActor);
+			
 			if (TeleportSound)
 			{
 				UGameplayStatics::PlaySoundAtLocation(this, TeleportSound, TargetLocation);

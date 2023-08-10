@@ -89,7 +89,5 @@ void UHealthComponent::TickComponent(
 	)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
 }
 

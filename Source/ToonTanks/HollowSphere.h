@@ -17,6 +17,4 @@ class TOONTANKS_API AHollowSphere : public AStaticMeshActor
 public:
 	// Sets default values for this actor's properties
 	AHollowSphere();
-
-	
 };
