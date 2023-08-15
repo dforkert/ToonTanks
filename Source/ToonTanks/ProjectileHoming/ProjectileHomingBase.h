@@ -5,6 +5,10 @@
 #include "CoreMinimal.h"
 #include "ProjectileHomingBase.generated.h"
 
+DECLARE_STATS_GROUP(TEXT("ProjectileHomingBase"), STATGROUP_ProjectileHomingBase, STATCAT_Advanced);
+
+
+
 class UProjectileMovementComponent;
 /**
  * @brief provides a target for homing AProjectile objects; this base class implements a simple memory-less pursuit model   

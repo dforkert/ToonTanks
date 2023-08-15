@@ -5,6 +5,7 @@
 
 #include "GameFramework/ProjectileMovementComponent.h"
 
+DECLARE_CYCLE_STAT(TEXT("ProjectileHomingBase::TickComponent"), STAT_ProjectileHomingBaseTickComponent, STATGROUP_ProjectileHomingBase);
 
 // Sets default values
 UProjectileHomingBase::UProjectileHomingBase()
@@ -57,6 +58,8 @@ void UProjectileHomingBase::TickComponent(
 	FActorComponentTickFunction* ThisTickFunction
 	)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ProjectileHomingBaseTickComponent);
+	
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	UpdateProjectileHomingLocation(DeltaTime);
 }
