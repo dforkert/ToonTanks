@@ -75,8 +75,8 @@ protected:
 	 * @param DeltaTime Current DeltaTime
 	 * @return Predicted TargetLocation at time of projectile impact
 	 */
-	static FVector PredictSimpleLinearTargetLocation(FVector ProjectileVelocity, FVector ProjectileLocation,
-														 FVector PreviousTargetLocation, FVector TargetLocation, float DeltaTime);
+	static FVector PredictSimpleLinearTargetLocation(const FVector& ProjectileVelocity, const FVector& ProjectileLocation,
+	                                                 const FVector& PreviousTargetLocation, const FVector& TargetLocation, float DeltaTime);
 
 	
 private:

@@ -38,10 +38,10 @@ void USimpleLinearProjectileHoming::InitializeSampleBuffer()
 }
 
 FVector USimpleLinearProjectileHoming::PredictSimpleLinearTargetLocation(
-	const FVector ProjectileVelocity,
-	const FVector ProjectileLocation,
-	const FVector PreviousTargetLocation,
-	const FVector TargetLocation,
+	const FVector& ProjectileVelocity,
+	const FVector& ProjectileLocation,
+	const FVector& PreviousTargetLocation,
+	const FVector& TargetLocation,
 	const float DeltaTime)
 {
 	const float ProjectileSpeed = ProjectileVelocity.Length();
