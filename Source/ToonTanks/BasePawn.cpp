@@ -55,17 +55,13 @@ void ABasePawn::DestroyPawn()
  * @param LookAtTarget Target in world coordinates
  * @param DeltaTime Time between consecutive ticks
  */
-void ABasePawn::RotateTurret(const FVector LookAtTarget, const float DeltaTime) const
+void ABasePawn::RotateTurret(const FVector& LookAtTarget, const float DeltaTime) const
 {
 	if (TurretMesh->Mobility == EComponentMobility::Movable)
 	{
-		// TODO: Clean up code below! Fix for Hollow Sphere movement!
 		const FVector ToTarget{LookAtTarget - TurretMesh->GetComponentLocation()};
-		FRotator LookAtRotation{TurretMesh->GetComponentRotation()};
-		FRotator TankUpVectorRotation{GetActorUpVector().Rotation()};
-		FVector ToTargetLoc = LookAtRotation.UnrotateVector(ToTarget);
-		//LookAtRotation = LookAtRotation.GetInverse() + FRotator{ToTarget.Rotation().Yaw, 0., 0.} + LookAtRotation;
-		//LookAtRotation.Yaw = ToTarget.Rotation().Yaw;
+		const FRotator LookAtRotation{TurretMesh->GetComponentRotation()};
+		const FVector ToTargetLoc = LookAtRotation.UnrotateVector(ToTarget);
 
 		FRotator LookAtRotationLoc = TurretMesh->GetRelativeRotation();
 		LookAtRotationLoc.Yaw = ToTargetLoc.Rotation().Yaw;
@@ -75,14 +71,6 @@ void ABasePawn::RotateTurret(const FVector LookAtTarget, const float DeltaTime) 
 				LookAtRotationLoc,
 				DeltaTime,
 				15.f));
-		/*TurretMesh->SetWorldRotation(
-			FMath::RInterpTo(
-				TurretMesh->GetComponentRotation(),
-				LookAtRotation,
-				DeltaTime,
-				15.f)
-		);
-		*/
 	}
 }
 

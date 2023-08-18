@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/BrushComponent.h"
 #include "Engine/StaticMeshActor.h"
 #include "HollowSphere.generated.h"
 

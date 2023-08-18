@@ -23,7 +23,7 @@ public:
 	virtual void DestroyPawn() override;
 
 protected:
-	void RotateTurret(FVector LookAtTarget, const float DeltaTime) const;
+	void RotateTurret(const FVector& LookAtTarget, const float DeltaTime) const;
 	void Fire();
 
 private:

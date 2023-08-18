@@ -20,7 +20,7 @@ void UNonLinearProjectileHoming::BeginPlay()
 	Super::BeginPlay();
 
 	FEigenExternalModule::FLMTargetPredictor::FLMResidualFunction LMResidualFunction{
-		[this](const FVector UnitDirFromProjectileToTarget, const double Time)-> FVector
+		[this](const FVector& UnitDirFromProjectileToTarget, const double Time)-> FVector
 		{
 			const FVector TargetLocation_Time{SimulateTargetLocation(Time)};
 			const FVector ProjectileLocation_Time{SimulateProjectileLocation(UnitDirFromProjectileToTarget, Time)};

@@ -20,7 +20,6 @@ void FEigenExternalModule::ShutdownModule()
 	// we call this function before unloading the module.
 }
 
-//TODO: how can we improve performance of these helper functions?
 static Eigen::Vector3d FVectorToVector3d(const FVector& InVector)
 {
     return Eigen::Vector3d{InVector.X, InVector.Y, InVector.Z};
@@ -30,8 +29,6 @@ static FVector VectorXdToFVector(const Eigen::VectorXd& InVector)
 {
     return FVector{InVector.x(), InVector.y(), InVector.z()};
 }
-
-
 
 using FLMResidualFunction = FEigenExternalModule::FLMTargetPredictor::FLMResidualFunction;
 /**
@@ -58,7 +55,6 @@ struct TargetLocationFunctor : public Eigen::DenseFunctor<double>
         return 0;
     }
 };
-    
 
 /**
  * @brief Wrapper struct to hide Eigen's functor classes/structs from the interface header
@@ -88,9 +84,9 @@ void FEigenExternalModule::FLMTargetPredictor::InitializeLMTargetPredictor(
 }
 
 TPair<FVector, double> FEigenExternalModule::FLMTargetPredictor::LMPredictTargetLocation(
-    const FVector CurrentProjectileLocation,
+    const FVector& CurrentProjectileLocation,
     const double CurrentProjectileSpeed,
-    const FVector PredictedTargetLocationGuess) const
+    const FVector& PredictedTargetLocationGuess) const
 {
     check(LMWrapper.IsValid());
     

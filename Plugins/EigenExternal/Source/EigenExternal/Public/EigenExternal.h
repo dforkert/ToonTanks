@@ -50,9 +50,9 @@ public:
 		 * @return TTuple consisting of the predicted unit direction vector from projectile to target and time until projectile impact
 		 */
 		TPair<FVector, double> LMPredictTargetLocation(
-			FVector CurrentProjectileLocation,
+			const FVector& CurrentProjectileLocation,
 			double CurrentProjectileSpeed,
-			FVector PredictedTargetLocationGuess
+			const FVector& PredictedTargetLocationGuess
 		) const;
 
 	private:

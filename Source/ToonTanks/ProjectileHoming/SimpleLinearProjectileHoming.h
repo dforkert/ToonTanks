@@ -17,9 +17,11 @@ class TOONTANKS_API USimpleLinearProjectileHoming : public UProjectileHomingBase
 	GENERATED_BODY()
 	
 public:
-	virtual void UpdateProjectileHomingLocation(
-		const float DeltaTime
-	) override;
+	/**
+	 * @brief Updates the location of the ProjectileHoming Actor
+	 * @param DeltaTime
+	 */
+	virtual void UpdateProjectileHomingLocation(const float DeltaTime) override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -33,7 +35,7 @@ protected:
 	class FCircularDeltaTimeLocationBuffer
 	{
 	public:
-		FCircularDeltaTimeLocationBuffer(const uint32 Size, const FDeltaTimeLocationPair DefaultElement) :
+		FCircularDeltaTimeLocationBuffer(const uint32 Size, const FDeltaTimeLocationPair& DefaultElement) :
 			CurrentPosition{0},
 			Buffer{Size, DefaultElement} {};
 
@@ -42,12 +44,19 @@ protected:
 		 * @return Capacity of the buffer 
 		 */
 		uint32 GetCapacity() const;
+		
 		/**
 		 * @brief Pushes a new element into the buffer;
 		 * thereby incrementing the current buffer position and overwriting the old element at this position
 		 * @param Element Element to be pushed into the buffer
 		 */
 		void PushNewElement(FDeltaTimeLocationPair&& Element);
+		
+		/**
+		 * @brief Returns the element at the specified offset from the current buffer position
+		 * @param OffSet Offset from the current buffer position
+		 * @return Returns the DeltaTime/Location pair stored at the specified offset from the current buffer position
+		 */
 		FDeltaTimeLocationPair GetElement(const int32 OffSet=0) const;
 
 	private:

@@ -24,9 +24,8 @@ AMissileProjectile::AMissileProjectile()
 void AMissileProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-
-
-	// TODO: Get ActorOfClass is slow!!!!
+	
+	// TODO: Get ActorOfClass is slow!
 	const AActor* Target = UGameplayStatics::GetActorOfClass(this, ATank::StaticClass());
 
 	if (ProjectileHomingClass)
