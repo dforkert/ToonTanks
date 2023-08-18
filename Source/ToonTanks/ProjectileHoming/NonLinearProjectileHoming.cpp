@@ -64,7 +64,7 @@ FVector UNonLinearProjectileHoming::SimulateTargetLocation(const double Time) co
 	return TargetLocation_Time;
 }
 
-FVector UNonLinearProjectileHoming::SimulateProjectileLocation(const FVector UnitDirFromProjectileToTarget, const double Time) const
+FVector UNonLinearProjectileHoming::SimulateProjectileLocation(const FVector& UnitDirFromProjectileToTarget, const double Time) const
 {
 	check(IsValid(ProjectileMovement));
 
@@ -85,8 +85,8 @@ FVector UNonLinearProjectileHoming::SimulateProjectileLocation(const FVector Uni
 
 FVector UNonLinearProjectileHoming::PredictTargetLocation(
 	const float DeltaTime,
-	const FVector ProjectileLocation,
-	const FVector TargetLocation
+	const FVector& ProjectileLocation,
+	const FVector& TargetLocation
 ) const
 {
 	const float OldDeltaTime = DeltaTimeLocationBuffer->GetElement(-2).Key;

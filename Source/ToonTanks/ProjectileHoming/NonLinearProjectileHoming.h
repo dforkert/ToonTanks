@@ -32,7 +32,7 @@ public:
 	 * @param Time 
 	 * @return Simulated projectile location at Time
 	 */
-	FVector SimulateProjectileLocation(FVector UnitDirFromProjectileToTarget, double Time) const;
+	FVector SimulateProjectileLocation(const FVector& UnitDirFromProjectileToTarget, double Time) const;
 
 	/**
 	 * @brief Predicts a future target location at time of projectile impact using an LM-algorithm
@@ -41,7 +41,7 @@ public:
 	 * @param TargetLocation Current target location
 	 * @return predicted future target location at time of projectile impact 
 	 */
-	FVector PredictTargetLocation(float DeltaTime, FVector ProjectileLocation, FVector TargetLocation) const;
+	FVector PredictTargetLocation(float DeltaTime, const FVector& ProjectileLocation, const FVector& TargetLocation) const;
 
 	/**
 	 * @brief Updates the homing target of the projectile using an LM-algorithm
