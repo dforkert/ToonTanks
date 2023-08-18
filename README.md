@@ -1,3 +1,3 @@
 # ToonTanks
 
-Developed with Unreal Engine 5
+UE5 project exploring real-time pawn movement prediction and pawn movement inside a hollow sphere.
